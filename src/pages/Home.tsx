@@ -49,7 +49,7 @@ export function Home() {
   return (
     <div className="page">
       <div className="page-head">
-        <h1>머신로그</h1>
+        <h1>운동기록</h1>
         <Link to="/settings" className="icon-btn" aria-label="설정">
           <Icon name="settings" />
         </Link>

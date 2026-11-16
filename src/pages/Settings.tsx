@@ -57,7 +57,7 @@ export function Settings() {
     const a = document.createElement('a');
     const d = new Date();
     a.href = url;
-    a.download = `machinelog-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}.json`;
+    a.download = `workoutlog-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}.json`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
@@ -65,7 +65,7 @@ export function Settings() {
   const doImport = async (file: File) => {
     try {
       const data = JSON.parse(await file.text()) as Partial<DataState> & { app?: string };
-      if (data.app !== 'machinelog' || !Array.isArray(data.workouts)) throw new Error('머신로그 백업 파일 형식이 아니에요.');
+      if (data.app !== 'machinelog' || !Array.isArray(data.workouts)) throw new Error('운동기록 백업 파일 형식이 아니에요.');
       const ok = await ask({
         title: '백업 가져오기',
         message: `운동 ${data.workouts.length}개가 든 백업이에요. 지금 데이터를 이 백업으로 바꿀까요?`,
@@ -194,7 +194,7 @@ export function Settings() {
       />
 
       <p className="tiny faint" style={{ textAlign: 'center', marginTop: 28 }}>
-        머신로그 v0.1 · 홈 화면에 추가하면 앱처럼 쓸 수 있어요
+        운동기록 v0.1 · 홈 화면에 추가하면 앱처럼 쓸 수 있어요
       </p>
 
       {restMenu && (

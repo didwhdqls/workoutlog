@@ -1,6 +1,6 @@
 // 아주 단순한 오프라인 지원: 네트워크 우선, 실패하면 캐시.
 // 설치할 때 index.html이 가리키는 JS/CSS까지 미리 받아 두므로, 한 번만 열어 봐도 오프라인에서 열립니다.
-const CACHE = 'machinelog-v2';
+const CACHE = 'machinelog-v3'; // 이름은 예전 그대로 둠 (저장 키). 버전만 올려 새 이름의 화면을 받게 함
 const SHELL = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (e) => {
