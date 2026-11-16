@@ -6,43 +6,93 @@ import { SUB_LABEL, SUBS_BY_GROUP } from '../data/muscles';
 import { fmtGuide, GROUP_GUIDE, guideStatus, STATUS_LABEL, SUB_GUIDE, type GuideStatus, type VolumeGuide } from '../data/volumeGuide';
 import { fmtVolume, latestBodyweight } from '../lib/stats';
 import { fmtDurationLong } from '../lib/util';
-import { computeWeek, deltaText, fmtWeekRange, shiftWeek, startOfWeek, weeklySeries, type MuscleBucket } from '../lib/weekly';
+import {
+  computeWeek,
+  deltaText,
+  fmtPeriod,
+  periodSeries,
+  shiftPeriod,
+  startOfPeriod,
+  weeksIn,
+  type MuscleBucket,
+  type Period,
+  type WeekPoint,
+} from '../lib/weekly';
 import { useMaps, useStore } from '../store';
 import type { MuscleGroup } from '../types';
 import { MUSCLE_LABEL } from '../types';
 
-const WEEKS = 12;
+/** 그래프에 보여 줄 기간 수: 주간 12주, 월간 12개월 */
+const SPAN: Record<Period, number> = { week: 12, month: 12 };
 /** 항상 보여 줄 주요 부위 (0세트여도 표시해서 빠진 부위가 보이게) */
 const MAIN_GROUPS: MuscleGroup[] = ['chest', 'back', 'shoulders', 'legs', 'arms', 'core'];
 
-type Metric = 'volume' | 'sets';
+type Metric = 'volume' | 'sets' | 'workouts' | 'time';
+const METRIC_LABEL: Record<Metric, string> = { volume: '볼륨', sets: '세트', workouts: '운동 횟수', time: '운동 시간' };
 
 export function Stats() {
   const workouts = useStore((s) => s.workouts);
   const weekStartDay = useStore((s) => s.settings.weekStart ?? 1);
   const maps = useMaps();
-  const thisWeek = startOfWeek(Date.now(), weekStartDay);
-  const [selected, setSelected] = useState(thisWeek);
+  const [period, setPeriod] = useState<Period>('week');
+  const thisP = startOfPeriod(Date.now(), period, weekStartDay);
+  const [selected, setSelected] = useState(Date.now());
   const [metric, setMetric] = useState<Metric>('volume');
+  const [trendMuscle, setTrendMuscle] = useState<MuscleGroup | 'all'>('all');
   const [open, setOpen] = useState<MuscleGroup | null>(null);
 
-  // 주 시작 요일 설정이 바뀌면 선택 주도 다시 맞춤
-  const sel = startOfWeek(selected, weekStartDay);
+  // 선택한 날짜가 속한 주/달 (주 시작 요일이나 기간 단위가 바뀌어도 맞춰짐)
+  const sel = startOfPeriod(selected, period, weekStartDay);
+  const selEnd = shiftPeriod(sel, period, 1);
+  const prevStart = shiftPeriod(sel, period, -1);
+  const lastName = period === 'week' ? '지난주' : '지난달';
+  // 지금 기간을 볼 땐 "지난주/지난달", 예전 기간을 볼 땐 그 바로 앞이라 "그 전 주/달"
+  const prevLabel = sel === thisP ? lastName : period === 'week' ? '그 전 주' : '그 전 달';
+  const unitWord = period === 'week' ? '주' : '달';
 
   const bw = useStore((s) => latestBodyweight(s.workouts));
-  const week = useMemo(() => computeWeek(workouts, sel, maps.ex, maps.v, bw), [workouts, sel, maps, bw]);
-  const prev = useMemo(() => computeWeek(workouts, shiftWeek(sel, -1), maps.ex, maps.v, bw), [workouts, sel, maps, bw]);
-
-  // 그래프 창: 기본은 최근 12주, 더 옛날 주를 고르면 그 주가 오른쪽 끝에 오도록
-  const windowEnd = sel < shiftWeek(thisWeek, -(WEEKS - 1)) ? sel : thisWeek;
-  const series = useMemo(
-    () => weeklySeries(workouts, windowEnd, WEEKS, weekStartDay, maps.ex, maps.v, bw),
-    [workouts, windowEnd, weekStartDay, maps, bw],
+  const cur = useMemo(() => computeWeek(workouts, sel, maps.ex, maps.v, bw, selEnd), [workouts, sel, selEnd, maps, bw]);
+  const prev = useMemo(() => computeWeek(workouts, prevStart, maps.ex, maps.v, bw, sel), [workouts, prevStart, sel, maps, bw]);
+  // 진행 중인 주/달은 지난 기간의 "같은 날짜까지"와 비교 (예: 11월 1–16일 vs 10월 1–16일)
+  const ongoing = sel === thisP;
+  const prevSameEnd = ongoing ? Math.min(prevStart + (Date.now() - sel), sel) : sel;
+  const prevSame = useMemo(
+    () => (ongoing ? computeWeek(workouts, prevStart, maps.ex, maps.v, bw, prevSameEnd) : prev),
+    [ongoing, workouts, prevStart, prevSameEnd, maps, bw, prev],
   );
-  const avgVolume = series.filter((p) => p.workouts > 0);
-  const avg = avgVolume.length ? avgVolume.reduce((t, p) => t + (metric === 'volume' ? p.volumeKg : p.sets), 0) / avgVolume.length : 0;
+  const deltaLabel = ongoing ? `${prevLabel} 같은 기간` : prevLabel;
+  // 월간일 때 부위별 세트는 "주 평균"으로 권장량과 비교
+  const weeks = weeksIn(sel, period);
+  const prevWeeks = weeksIn(prevStart, period);
 
-  const groups: MuscleGroup[] = [...MAIN_GROUPS, ...(week.muscles.has('other') ? (['other'] as MuscleGroup[]) : [])];
+  // 그래프 창: 기본은 최근 12주(12개월), 더 옛날을 고르면 그 기간이 오른쪽 끝에 오도록
+  const span = SPAN[period];
+  const windowEnd = sel < shiftPeriod(thisP, period, -(span - 1)) ? sel : thisP;
+  const series = useMemo(
+    () => periodSeries(workouts, period, windowEnd, span, weekStartDay, maps.ex, maps.v, bw, trendMuscle),
+    [workouts, period, windowEnd, span, weekStartDay, maps, bw, trendMuscle],
+  );
+  const valueOf = (pt: WeekPoint) =>
+    metric === 'volume' ? pt.volumeKg : metric === 'sets' ? pt.sets : metric === 'workouts' ? pt.workouts : pt.durationMs / 60000;
+  const fmtValue = (v: number) =>
+    metric === 'volume'
+      ? fmtVolume(v)
+      : metric === 'sets'
+        ? `${Math.round(v)}세트`
+        : metric === 'workouts'
+          ? `${Math.round(v * 10) / 10}회`
+          : fmtDurationLong(v * 60000);
+  const activePts = series.filter((pt) => pt.workouts > 0);
+  const avg = activePts.length ? activePts.reduce((t, pt) => t + valueOf(pt), 0) / activePts.length : 0;
+  const best = series.reduce<WeekPoint | null>((b, pt) => (valueOf(pt) > (b ? valueOf(b) : 0) ? pt : b), null);
+  // 앞 절반 대비 뒤 절반 평균 (추세)
+  const half = Math.floor(series.length / 2);
+  const avgOf = (pts: WeekPoint[]) => (pts.length ? pts.reduce((t, pt) => t + valueOf(pt), 0) / pts.length : 0);
+  const before = avgOf(series.slice(0, half));
+  const after = avgOf(series.slice(half));
+  const trendPct = before > 0 ? Math.round(((after - before) / before) * 100) : null;
+
+  const groups: MuscleGroup[] = [...MAIN_GROUPS, ...(cur.muscles.has('other') ? (['other'] as MuscleGroup[]) : [])];
 
   if (workouts.length === 0) {
     return (
@@ -50,14 +100,24 @@ export function Stats() {
         <div className="page-head">
           <h1>통계</h1>
         </div>
-        <div className="empty">
-          운동을 기록하면 주간 볼륨과 부위별 세트 수가 여기에 쌓여요.
-        </div>
+        <div className="empty">운동을 기록하면 주간·월간 볼륨과 부위별 세트 수가 여기에 쌓여요.</div>
       </div>
     );
   }
 
-  const isThisWeek = sel === thisWeek;
+  const isCurrent = sel === thisP;
+  const isPrev = sel === shiftPeriod(thisP, period, -1);
+  const title = isCurrent ? `이번 ${unitWord}` : isPrev ? lastName : fmtPeriod(sel, period);
+  const axis = (v: number) => {
+    if (metric === 'volume') return v >= 1000 ? `${Math.round(v / 100) / 10}t` : String(Math.round(v));
+    if (metric === 'time') return v >= 60 ? `${Math.round((v / 60) * 10) / 10}h` : `${Math.round(v)}m`;
+    return String(v);
+  };
+  const barLabel = (start: number) => {
+    const d = new Date(start);
+    if (period === 'week') return `${d.getMonth() + 1}/${d.getDate()}`;
+    return d.getMonth() === 0 ? `${String(d.getFullYear()).slice(2)}년1월` : `${d.getMonth() + 1}월`;
+  };
 
   return (
     <div className="page">
@@ -65,15 +125,30 @@ export function Stats() {
         <h1>통계</h1>
       </div>
 
+      <div className="seg" style={{ marginBottom: 10 }}>
+        <button className={period === 'week' ? 'on' : ''} onClick={() => setPeriod('week')}>
+          주간
+        </button>
+        <button className={period === 'month' ? 'on' : ''} onClick={() => setPeriod('month')}>
+          월간
+        </button>
+      </div>
+
       <div className="card row" style={{ padding: '6px 6px', marginBottom: 10 }}>
-        <button className="icon-btn" onClick={() => setSelected(shiftWeek(sel, -1))} aria-label="이전 주">
+        <button className="icon-btn" onClick={() => setSelected(shiftPeriod(sel, period, -1))} aria-label={`이전 ${unitWord}`}>
           <Icon name="back" size={18} />
         </button>
         <div className="grow" style={{ textAlign: 'center' }}>
-          <div style={{ fontWeight: 700 }}>{isThisWeek ? '이번 주' : sel === shiftWeek(thisWeek, -1) ? '지난주' : fmtWeekRange(sel)}</div>
-          {(isThisWeek || sel === shiftWeek(thisWeek, -1)) && <div className="tiny muted">{fmtWeekRange(sel)}</div>}
+          <div style={{ fontWeight: 700 }}>{title}</div>
+          {(isCurrent || isPrev) && <div className="tiny muted">{fmtPeriod(sel, period)}</div>}
         </div>
-        <button className="icon-btn" disabled={isThisWeek} style={{ opacity: isThisWeek ? 0.3 : 1 }} onClick={() => setSelected(shiftWeek(sel, 1))} aria-label="다음 주">
+        <button
+          className="icon-btn"
+          disabled={isCurrent}
+          style={{ opacity: isCurrent ? 0.3 : 1 }}
+          onClick={() => setSelected(shiftPeriod(sel, period, 1))}
+          aria-label={`다음 ${unitWord}`}
+        >
           <Icon name="chevron" size={18} />
         </button>
       </div>
@@ -81,73 +156,107 @@ export function Stats() {
       <div className="stats">
         <div className="stat">
           <div className="label">총 볼륨</div>
-          <div className="value">{fmtVolume(week.volumeKg)}</div>
-          <div className="foot">{deltaText(week.volumeKg, prev.volumeKg)}</div>
+          <div className="value">{fmtVolume(cur.volumeKg)}</div>
+          <div className="foot">{deltaText(cur.volumeKg, prevSame.volumeKg, deltaLabel)}</div>
         </div>
         <div className="stat">
           <div className="label">총 세트</div>
           <div className="value">
-            {week.sets}
+            {cur.sets}
             <small>세트</small>
           </div>
-          <div className="foot">{deltaText(week.sets, prev.sets)}</div>
+          <div className="foot">{deltaText(cur.sets, prevSame.sets, deltaLabel)}</div>
         </div>
         <div className="stat">
           <div className="label">운동</div>
           <div className="value">
-            {week.workouts}
+            {cur.workouts}
             <small>회</small>
           </div>
-          <div className="foot">지난주 {prev.workouts}회</div>
+          <div className="foot">
+            {prevLabel} {prev.workouts}회{period === 'month' && cur.workouts > 0 ? ` · 주 ${Math.round((cur.workouts / weeks) * 10) / 10}회` : ''}
+          </div>
         </div>
         <div className="stat">
           <div className="label">운동 시간</div>
           <div className="value" style={{ fontSize: 18, paddingTop: 3 }}>
-            {week.durationMs ? fmtDurationLong(week.durationMs) : '0분'}
+            {cur.durationMs ? fmtDurationLong(cur.durationMs) : '0분'}
           </div>
-          {week.cardioSec > 0 && <div className="foot">유산소 {Math.round(week.cardioSec / 60)}분</div>}
+          {cur.cardioSec > 0 && <div className="foot">유산소 {Math.round(cur.cardioSec / 60)}분</div>}
         </div>
       </div>
 
-      <div className="section-title">주간 {metric === 'volume' ? '볼륨' : '세트'} 추이</div>
+      <div className="section-title">
+        {period === 'week' ? '주간' : '월간'} {METRIC_LABEL[metric]} 추이
+        {trendMuscle !== 'all' && <span className="tag accent">{MUSCLE_LABEL[trendMuscle]}</span>}
+      </div>
       <div className="card" style={{ padding: '12px 8px 8px' }}>
-        <div className="seg" style={{ margin: '0 6px 10px' }}>
-          <button className={metric === 'volume' ? 'on' : ''} onClick={() => setMetric('volume')}>
-            볼륨 (kg)
+        <div className="seg" style={{ margin: '0 6px 8px' }}>
+          {(['volume', 'sets', 'workouts', 'time'] as Metric[]).map((m) => (
+            <button key={m} className={metric === m ? 'on' : ''} onClick={() => setMetric(m)}>
+              {METRIC_LABEL[m]}
+            </button>
+          ))}
+        </div>
+        <div className="chips" style={{ margin: '0 6px 10px' }}>
+          <button className={'chip' + (trendMuscle === 'all' ? ' on' : '')} onClick={() => setTrendMuscle('all')}>
+            전체
           </button>
-          <button className={metric === 'sets' ? 'on' : ''} onClick={() => setMetric('sets')}>
-            세트 수
-          </button>
+          {MAIN_GROUPS.map((m) => (
+            <button key={m} className={'chip' + (trendMuscle === m ? ' on' : '')} onClick={() => setTrendMuscle(m)}>
+              {MUSCLE_LABEL[m]}
+            </button>
+          ))}
         </div>
         <BarChart
-          bars={series.map((p) => {
-            const d = new Date(p.start);
-            return {
-              key: p.start,
-              label: `${d.getMonth() + 1}/${d.getDate()}`,
-              value: metric === 'volume' ? p.volumeKg : p.sets,
-              tip: metric === 'volume' ? fmtVolume(p.volumeKg) : `${p.sets}세트`,
-              tipSub: `${fmtWeekRange(p.start)} · ${p.workouts}회`,
-            };
-          })}
+          bars={series.map((pt) => ({
+            key: pt.start,
+            label: barLabel(pt.start),
+            value: valueOf(pt),
+            tip: fmtValue(valueOf(pt)),
+            tipSub: `${fmtPeriod(pt.start, period)} · ${pt.workouts}회`,
+          }))}
           selectedKey={sel}
           onSelect={setSelected}
-          integer={metric === 'sets'}
-          fmtAxis={(v) => (metric === 'sets' ? String(v) : v >= 1000 ? `${Math.round(v / 100) / 10}t` : String(Math.round(v)))}
+          integer={metric === 'sets' || metric === 'workouts'}
+          fmtAxis={axis}
         />
-        <div className="tiny faint" style={{ padding: '4px 8px 0' }}>
-          막대를 누르면 그 주를 봐요 · 운동한 주 평균 {metric === 'volume' ? fmtVolume(avg) : `${Math.round(avg)}세트`}
+        <div className="row tiny faint" style={{ padding: '6px 8px 0', gap: 10, flexWrap: 'wrap' }}>
+          <span>
+            운동한 {unitWord} 평균 <b style={{ color: 'var(--text-2)' }}>{fmtValue(avg)}</b>
+          </span>
+          {best && valueOf(best) > 0 && (
+            <span>
+              최고 <b style={{ color: 'var(--text-2)' }}>{fmtValue(valueOf(best))}</b> ({fmtPeriod(best.start, period)})
+            </span>
+          )}
+          {trendPct != null && (
+            <span>
+              최근 {span - half}
+              {period === 'week' ? '주' : '개월'}은 그 전보다{' '}
+              <b style={{ color: 'var(--text-2)' }}>{trendPct === 0 ? '비슷' : `${trendPct > 0 ? '▲' : '▼'} ${Math.abs(trendPct)}%`}</b>
+            </span>
+          )}
+        </div>
+        <div className="tiny faint" style={{ padding: '2px 8px 0' }}>
+          막대를 누르면 그 {unitWord}를 봐요
         </div>
       </div>
 
-      <div className="section-title">부위별 세트 · 권장량</div>
+      <div className="section-title">
+        부위별 세트 · 권장량
+        {period === 'month' && <span className="tiny faint">주 평균으로 비교</span>}
+      </div>
       <div className="card" style={{ padding: '4px 14px' }}>
         {groups.map((g) => (
           <MuscleRow
             key={g}
             group={g}
-            bucket={week.muscles.get(g)}
+            bucket={cur.muscles.get(g)}
             prevSets={prev.muscles.get(g)?.sets ?? 0}
+            prevLabel={prevLabel}
+            weeks={weeks}
+            prevWeeks={prevWeeks}
             open={open === g}
             onToggle={() => setOpen(open === g ? null : g)}
             exName={(id) => maps.ex.get(id)?.name ?? '?'}
@@ -156,18 +265,19 @@ export function Stats() {
       </div>
       <div className="row tiny faint" style={{ margin: '8px 2px 0', gap: 6 }}>
         <span style={{ width: 18, height: 8, borderRadius: 3, background: 'var(--accent-soft)', flex: 'none' }} />
-        <span>
-          옅은 구간: 부위별 주당 권장 세트 · 세로선: 회복이 어려워지기 쉬운 선
-        </span>
+        <span>옅은 구간: 부위별 주당 권장 세트 · 세로선: 회복이 어려워지기 쉬운 선</span>
       </div>
       <p className="tiny faint" style={{ margin: '6px 2px 0' }}>
-        권장량은 근비대 목적의 참고값이에요 (RP 볼륨 랜드마크를 참고해 단순화). 하체는 대퇴사두+햄스트링, 팔은 이두+삼두 기준이고, 부위를 누르면 세부 부위별 권장량이 보여요.
-        워밍업 세트는 빼고, 운동의 주 타깃 부위에만 1세트로 세요. 개인차가 크니 회복 상태에 맞춰 조절하세요.
+        권장량은 근비대 목적의 참고값이에요 (RP 볼륨 랜드마크를 참고해 단순화). 하체는 대퇴사두+햄스트링, 팔은 이두+삼두 기준이고, 부위를 누르면 세부 부위별
+        권장량이 보여요.
+        {period === 'month' && ' 월간에서는 그 달 세트를 주 수로 나눈 주 평균으로 비교해요 (이번 달은 오늘까지).'} 워밍업 세트는 빼고, 운동의 주 타깃
+        부위에만 1세트로 세요. 개인차가 크니 회복 상태에 맞춰 조절하세요.
       </p>
 
       <p className="tiny faint" style={{ margin: '14px 2px 0' }}>
-        볼륨 = 무게 × 횟수의 합. lb 기구는 kg로 환산하고, "칸" 단위 기구는 빠져요. 풀업·딥스 같은 맨몸 운동은 체중 × 횟수, 어시스트 풀업은 (체중 − 보조 무게) × 횟수로 넣어요
-        {' '}(체중은 운동 기록 화면에서 그날 입력한 값, 없으면 최근 값{bw ? ` ${bw}kg` : ' — 아직 입력한 적 없음'}). 복근 맨몸 운동은 빠져요.{' '}
+        볼륨 = 무게 × 횟수의 합. lb 기구는 kg로 환산하고, "칸" 단위 기구는 빠져요. 풀업·딥스 같은 맨몸 운동은 체중 × 횟수, 어시스트 풀업은 (체중 − 보조
+        무게) × 횟수로 넣어요 (체중은 운동 기록 화면에서 그날 입력한 값, 없으면 최근 값{bw ? ` ${bw}kg` : ' — 아직 입력한 적 없음'}). 복근 맨몸 운동은
+        빠져요.{' '}
         <Link to="/settings" style={{ textDecoration: 'underline' }}>
           주 시작 요일 설정
         </Link>
@@ -216,6 +326,9 @@ function MuscleRow({
   group,
   bucket,
   prevSets,
+  prevLabel,
+  weeks,
+  prevWeeks,
   open,
   onToggle,
   exName,
@@ -223,11 +336,17 @@ function MuscleRow({
   group: MuscleGroup;
   bucket?: MuscleBucket;
   prevSets: number;
+  prevLabel: string;
+  /** 기간 안의 주 수 (주간 = 1). 권장량은 주당 기준이라 세트를 이 값으로 나눠 비교 */
+  weeks: number;
+  prevWeeks: number;
   open: boolean;
   onToggle: () => void;
   exName: (id: string) => string;
 }) {
   const sets = bucket?.sets ?? 0;
+  const perWeek = (n: number) => Math.round((n / weeks) * 10) / 10;
+  const monthly = weeks > 1;
   const guide = GROUP_GUIDE[group];
   const subs = SUBS_BY_GROUP[group].map((s) => ({ s, n: bucket?.subs.get(s) ?? 0 })).filter((x) => x.n > 0);
   const unassigned = sets - subs.reduce((t, x) => t + x.n, 0);
@@ -245,7 +364,7 @@ function MuscleRow({
       <button style={{ width: '100%', textAlign: 'left' }} onClick={onToggle} disabled={!expandable} aria-expanded={open}>
         <div className="row" style={{ alignItems: 'baseline' }}>
           <span style={{ fontWeight: 700, color: sets ? 'var(--text)' : 'var(--text-3)' }}>{MUSCLE_LABEL[group]}</span>
-          <StatusText sets={sets} guide={guide} />
+          <StatusText sets={perWeek(sets)} guide={guide} />
           <span className="grow" />
           <span className="tnum" style={{ fontWeight: 800, fontSize: 18, color: sets ? 'var(--text)' : 'var(--text-3)' }}>
             {sets}
@@ -254,11 +373,15 @@ function MuscleRow({
           {expandable && <Icon name={open ? 'up' : 'down'} size={16} />}
         </div>
         <div style={{ marginTop: 6 }}>
-          <GuideBar sets={sets} guide={guide} />
+          <GuideBar sets={perWeek(sets)} guide={guide} />
         </div>
         <div className="row tiny muted" style={{ marginTop: 4 }}>
           <span className="grow">{sets > 0 ? subText : ''}</span>
-          <span className="faint">지난주 {prevSets}</span>
+          {monthly && sets > 0 && <span className="tnum">주 평균 {perWeek(sets)} ·</span>}
+          <span className="faint">
+            {prevLabel} {prevSets}
+            {monthly && prevSets > 0 ? ` (주 ${Math.round((prevSets / prevWeeks) * 10) / 10})` : ''}
+          </span>
           {bucket && bucket.volumeKg > 0 && <span className="faint tnum">· {fmtVolume(bucket.volumeKg)}</span>}
         </div>
       </button>
@@ -270,13 +393,13 @@ function MuscleRow({
                 <div key={s} style={{ padding: '4px 0' }}>
                   <div className="row small">
                     <span className="grow">{SUB_LABEL[s]}</span>
-                    <StatusText sets={n} guide={g} />
-                    <span className="tnum" style={{ fontWeight: 600, width: 46, textAlign: 'right' }}>
-                      {n}세트
+                    <StatusText sets={perWeek(n)} guide={g} />
+                    <span className="tnum" style={{ fontWeight: 600, width: monthly ? 78 : 46, textAlign: 'right' }}>
+                      {n}세트{monthly && n > 0 ? ` (주 ${perWeek(n)})` : ''}
                     </span>
                   </div>
                   <div style={{ marginTop: 3 }}>
-                    <GuideBar sets={n} guide={g} height={6} />
+                    <GuideBar sets={perWeek(n)} guide={g} height={6} />
                   </div>
                 </div>
               ))}
