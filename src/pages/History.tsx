@@ -4,10 +4,10 @@ import { ask, askText } from '../components/Dialog';
 import { Icon } from '../components/Icon';
 import { ReviewCard, reviewSummary } from '../components/ReviewCard';
 import { findPRs, fmtVolume, latestBodyweight, workoutSetCount, workoutVolumeKg } from '../lib/stats';
-import { dayKey, MUSCLE_SHORT, parseDayKey, workoutsByDay } from '../lib/calendar';
+import { dayKey, dayLabel, parseDayKey, workoutsByDay } from '../lib/calendar';
 import { fmtDate, fmtDurationLong, fmtSet, fmtTime, variantName } from '../lib/util';
 import { useMaps, useStore } from '../store';
-import { GRIP_LABEL, MUSCLE_LABEL, type Workout } from '../types';
+import { GRIP_LABEL, type Workout } from '../types';
 
 export function WorkoutCard({ w }: { w: Workout }) {
   const maps = useMaps();
@@ -69,6 +69,8 @@ export function History() {
   });
 
   const byDay = useMemo(() => workoutsByDay(workouts, maps.ex), [workouts, maps.ex]);
+  const routines = useStore((s) => s.routines);
+  const routineMap = useMemo(() => new Map(routines.map((r) => [r.id, r])), [routines]);
   const inMonth = useMemo(
     () =>
       workouts.filter((w) => {
@@ -133,10 +135,10 @@ export function History() {
                 className={cls}
                 disabled={!info}
                 onClick={() => setParams(k === picked ? {} : { d: k }, { replace: true })}
-                aria-label={`${cursor.m + 1}월 ${d}일${info ? ` 운동 ${info.workouts.length}회 ${info.muscles.map((m) => MUSCLE_LABEL[m]).join(', ')}` : ''}`}
+                aria-label={`${cursor.m + 1}월 ${d}일${info ? ` ${dayLabel(info, routineMap)} 운동 ${info.workouts.length}회` : ''}`}
               >
                 <span className="num">{d}</span>
-                {info && <span className="mus">{info.muscles[0] ? MUSCLE_SHORT[info.muscles[0]] : '운동'}</span>}
+                {info && <span className="mus">{dayLabel(info, routineMap)}</span>}
                 {info && info.workouts.length > 1 && <span className="cnt">{info.workouts.length}</span>}
               </button>
             );
@@ -145,7 +147,7 @@ export function History() {
         <div className="row tiny faint" style={{ marginTop: 8, gap: 12, justifyContent: 'center' }}>
           <span>
             <span className="cal-key has" />
-            운동한 날 · 주로 한 부위
+            운동한 날 · 루틴 이름 또는 한 부위
           </span>
           {activeKey && (
             <span>
