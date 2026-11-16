@@ -981,22 +981,110 @@ tr.done .num-in {
   padding-bottom: 2px;
 }
 .cal .day {
+  position: relative;
   aspect-ratio: 1;
-  max-height: 44px;
+  max-height: 52px;
   border-radius: 10px;
-  display: grid;
-  place-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
   font-size: 13px;
   color: var(--text-2);
   font-variant-numeric: tabular-nums;
 }
+.cal .day:disabled {
+  opacity: 1;
+  cursor: default;
+}
+.cal .day .mus {
+  font-size: 9.5px;
+  font-weight: 600;
+  line-height: 1;
+}
+.cal .day .cnt {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: 9px;
+  font-weight: 800;
+}
 .cal .day.has {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 700;
+}
+.cal .day.picked {
   background: var(--accent);
   color: var(--accent-ink);
-  font-weight: 700;
 }
 .cal .day.today {
   outline: 1.5px solid var(--text-3);
+  outline-offset: -1.5px;
+}
+.cal .day.live {
+  outline: 1.5px dashed var(--ok);
+  outline-offset: -1.5px;
+}
+.cal-key {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  vertical-align: -1px;
+  margin-right: 4px;
+}
+.cal-key.has {
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+}
+.cal-key.live {
+  border: 1.5px dashed var(--ok);
+}
+
+/* 홈 주간 달력 */
+.week-strip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.week-strip .wd {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 0 7px;
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 11px;
+  color: var(--text-3);
+}
+.week-strip .wd .n {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+.week-strip .wd .m {
+  font-size: 10px;
+  font-weight: 700;
+  min-height: 12px;
+}
+.week-strip .wd.has {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.week-strip .wd.has .n {
+  color: var(--accent);
+}
+.week-strip .wd.today {
+  outline: 1.5px solid var(--text-3);
+  outline-offset: -1.5px;
+}
+.week-strip .wd.live {
+  outline: 1.5px dashed var(--ok);
   outline-offset: -1.5px;
 }
 

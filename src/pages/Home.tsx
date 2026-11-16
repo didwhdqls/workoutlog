@@ -2,7 +2,10 @@ import { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { fmtVolume, latestBodyweight } from '../lib/stats';
+import { dayKey, MUSCLE_SHORT, workoutsByDay } from '../lib/calendar';
 import { computeWeek, startOfWeek } from '../lib/weekly';
+
+const DOW = ['일', '월', '화', '수', '목', '금', '토'];
 import { fmtDate, fmtDurationLong } from '../lib/util';
 import { useMaps, useStore } from '../store';
 import { MUSCLE_LABEL } from '../types';
@@ -24,6 +27,12 @@ export function Home() {
     () => computeWeek(workouts, startOfWeek(Date.now(), weekStartDay), maps.ex, maps.v, bw),
     [workouts, weekStartDay, maps, bw],
   );
+  // 이번 주 7일 달력
+  const weekStartTs = startOfWeek(Date.now(), weekStartDay);
+  const byDay = useMemo(() => workoutsByDay(workouts, maps.ex), [workouts, maps.ex]);
+  const todayKey = dayKey(Date.now());
+  const activeKey = active ? dayKey(active.startedAt) : null;
+
   const topMuscles = [...week.muscles.entries()].filter(([, b]) => b.sets > 0).sort((a, b) => b[1].sets - a[1].sets);
 
   const quick = useMemo(
@@ -74,6 +83,32 @@ export function Home() {
         <Link to="/stats" className="btn ghost sm">
           통계 <Icon name="chevron" size={14} />
         </Link>
+      </div>
+      <div className="week-strip">
+        {Array.from({ length: 7 }, (_, i) => {
+          const day = new Date(weekStartTs);
+          day.setDate(day.getDate() + i);
+          const k = dayKey(day.getTime());
+          const info = byDay.get(k);
+          const cls = ['wd', info && 'has', k === todayKey && 'today', k === activeKey && 'live'].filter(Boolean).join(' ');
+          const label = `${day.getMonth() + 1}월 ${day.getDate()}일${info ? ` 운동 ${info.muscles.map((m) => MUSCLE_LABEL[m]).join(', ')}` : ''}`;
+          const body = (
+            <>
+              <span>{DOW[day.getDay()]}</span>
+              <span className="n">{day.getDate()}</span>
+              <span className="m">{info ? (info.muscles[0] ? MUSCLE_SHORT[info.muscles[0]] : '운동') : k === activeKey ? '진행' : ''}</span>
+            </>
+          );
+          return info ? (
+            <Link key={k} to={`/history?d=${k}`} className={cls} aria-label={label}>
+              {body}
+            </Link>
+          ) : (
+            <div key={k} className={cls} aria-label={label}>
+              {body}
+            </div>
+          );
+        })}
       </div>
       <Link to="/stats" className="stats" style={{ display: 'grid' }}>
         <div className="stat">

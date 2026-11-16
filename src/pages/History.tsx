@@ -4,9 +4,10 @@ import { ask, askText } from '../components/Dialog';
 import { Icon } from '../components/Icon';
 import { ReviewCard, reviewSummary } from '../components/ReviewCard';
 import { findPRs, fmtVolume, latestBodyweight, workoutSetCount, workoutVolumeKg } from '../lib/stats';
+import { dayKey, MUSCLE_SHORT, parseDayKey, workoutsByDay } from '../lib/calendar';
 import { fmtDate, fmtDurationLong, fmtSet, fmtTime, variantName } from '../lib/util';
 import { useMaps, useStore } from '../store';
-import { GRIP_LABEL, type Workout } from '../types';
+import { GRIP_LABEL, MUSCLE_LABEL, type Workout } from '../types';
 
 export function WorkoutCard({ w }: { w: Workout }) {
   const maps = useMaps();
@@ -56,33 +57,40 @@ export function WorkoutCard({ w }: { w: Workout }) {
 
 export function History() {
   const workouts = useStore((s) => s.workouts);
+  const active = useStore((s) => s.active);
+  const maps = useMaps();
+  const [params, setParams] = useSearchParams();
+  // ?d=YYYY-MM-DD 로 들어오면 그날을 고른 상태 (홈의 주간 달력에서 누를 때)
+  const picked = params.get('d');
+  const pickedDate = picked ? parseDayKey(picked) : null;
   const [cursor, setCursor] = useState(() => {
-    const d = new Date();
+    const d = pickedDate ?? new Date();
     return { y: d.getFullYear(), m: d.getMonth() };
   });
 
-  const { days, inMonth } = useMemo(() => {
-    const days = new Set<number>();
-    const inMonth: Workout[] = [];
-    for (const w of workouts) {
-      const d = new Date(w.startedAt);
-      if (d.getFullYear() === cursor.y && d.getMonth() === cursor.m) {
-        days.add(d.getDate());
-        inMonth.push(w);
-      }
-    }
-    return { days, inMonth };
-  }, [workouts, cursor]);
+  const byDay = useMemo(() => workoutsByDay(workouts, maps.ex), [workouts, maps.ex]);
+  const inMonth = useMemo(
+    () =>
+      workouts.filter((w) => {
+        const d = new Date(w.startedAt);
+        return d.getFullYear() === cursor.y && d.getMonth() === cursor.m;
+      }),
+    [workouts, cursor],
+  );
+  const shown = picked ? (byDay.get(picked)?.workouts ?? []) : inMonth;
+  const activeKey = active ? dayKey(active.startedAt) : null;
+  const daysTrained = new Set(inMonth.map((w) => dayKey(w.startedAt))).size;
 
   const first = new Date(cursor.y, cursor.m, 1).getDay();
   const count = new Date(cursor.y, cursor.m + 1, 0).getDate();
-  const today = new Date();
-  const isThisMonth = today.getFullYear() === cursor.y && today.getMonth() === cursor.m;
-  const move = (d: number) =>
+  const todayKey = dayKey(Date.now());
+  const move = (d: number) => {
+    setParams({}, { replace: true });
     setCursor((c) => {
       const m = c.m + d;
       return { y: c.y + Math.floor(m / 12), m: ((m % 12) + 12) % 12 };
     });
+  };
 
   return (
     <div className="page">
@@ -97,7 +105,7 @@ export function History() {
           <div className="grow" style={{ textAlign: 'center', fontWeight: 700 }}>
             {cursor.y}년 {cursor.m + 1}월
             <div className="tiny muted" style={{ fontWeight: 500 }}>
-              {inMonth.length}회 운동
+              {daysTrained}일 · {inMonth.length}회 운동
             </div>
           </div>
           <button className="icon-btn" onClick={() => move(1)} aria-label="다음 달">
@@ -113,17 +121,51 @@ export function History() {
           {Array.from({ length: first }, (_, i) => (
             <div key={'b' + i} />
           ))}
-          {Array.from({ length: count }, (_, i) => i + 1).map((d) => (
-            <div key={d} className={'day' + (days.has(d) ? ' has' : '') + (isThisMonth && d === today.getDate() ? ' today' : '')}>
-              {d}
-            </div>
-          ))}
+          {Array.from({ length: count }, (_, i) => i + 1).map((d) => {
+            const k = dayKey(new Date(cursor.y, cursor.m, d).getTime());
+            const info = byDay.get(k);
+            const cls = ['day', info && 'has', k === todayKey && 'today', k === picked && 'picked', k === activeKey && 'live']
+              .filter(Boolean)
+              .join(' ');
+            return (
+              <button
+                key={d}
+                className={cls}
+                disabled={!info}
+                onClick={() => setParams(k === picked ? {} : { d: k }, { replace: true })}
+                aria-label={`${cursor.m + 1}월 ${d}일${info ? ` 운동 ${info.workouts.length}회 ${info.muscles.map((m) => MUSCLE_LABEL[m]).join(', ')}` : ''}`}
+              >
+                <span className="num">{d}</span>
+                {info && <span className="mus">{info.muscles[0] ? MUSCLE_SHORT[info.muscles[0]] : '운동'}</span>}
+                {info && info.workouts.length > 1 && <span className="cnt">{info.workouts.length}</span>}
+              </button>
+            );
+          })}
+        </div>
+        <div className="row tiny faint" style={{ marginTop: 8, gap: 12, justifyContent: 'center' }}>
+          <span>
+            <span className="cal-key has" />
+            운동한 날 · 주로 한 부위
+          </span>
+          {activeKey && (
+            <span>
+              <span className="cal-key live" />
+              진행 중
+            </span>
+          )}
         </div>
       </div>
 
-      <div className="section-title">{cursor.m + 1}월 운동</div>
-      {inMonth.length === 0 && <div className="empty">이 달에는 기록이 없어요.</div>}
-      {inMonth.map((w) => (
+      <div className="section-title">
+        {pickedDate ? `${pickedDate.getMonth() + 1}월 ${pickedDate.getDate()}일 운동` : `${cursor.m + 1}월 운동`}
+        {picked && (
+          <button className="btn ghost sm" onClick={() => setParams({}, { replace: true })}>
+            {cursor.m + 1}월 전체
+          </button>
+        )}
+      </div>
+      {shown.length === 0 && <div className="empty">이 달에는 기록이 없어요.</div>}
+      {shown.map((w) => (
         <WorkoutCard key={w.id} w={w} />
       ))}
     </div>
