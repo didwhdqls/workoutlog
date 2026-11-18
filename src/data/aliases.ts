@@ -47,6 +47,7 @@ export const EXERCISE_ALIASES: Record<string, string[]> = {
   'overhead-press': ['Overhead Press', 'OHP', 'Military Press', 'Shoulder Press', '밀리터리 프레스', '밀프', '숄더 프레스'],
   'shoulder-press': ['Shoulder Press Machine', 'Machine Shoulder Press', 'Seated Shoulder Press', '숄프', '머신 숄더'],
   'lateral-raise': ['Lateral Raise', 'Side Lateral Raise', 'Side Raise', '사레레', '사이드 레이즈'],
+  'one-arm-lateral-raise': ['One Arm Lateral Raise', 'Single Arm Lateral Raise', 'Unilateral Lateral Raise', '원암 사레레', '한팔 레터럴 레이즈', '외팔 사레레', '케이블 사레레'],
   'rear-delt-fly': ['Rear Delt Fly', 'Reverse Fly', 'Reverse Pec Deck', '리버스 펙덱', '리어 델트', '리버스 플라이'],
   'face-pull': ['Face Pull'],
   shrug: ['Shrug', 'Shrugs', '쉬러그', '슈럭'],

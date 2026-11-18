@@ -83,6 +83,7 @@ const SEED_SUB: Record<string, SubMuscle> = {
   'overhead-press': 'front-delt',
   'shoulder-press': 'front-delt',
   'lateral-raise': 'side-delt',
+  'one-arm-lateral-raise': 'side-delt',
   'rear-delt-fly': 'rear-delt',
   'face-pull': 'rear-delt',
   shrug: 'traps',

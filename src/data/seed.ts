@@ -321,6 +321,13 @@ const SPEC: ExSpec[] = [
       ...many('stack', ['prime', 'atlantis']),
     ],
   },
+  // v6: 한쪽씩 하는 레터럴 레이즈 (케이블이 가장 흔함). 양손 버전과 무게가 달라 따로 기록
+  {
+    id: 'one-arm-lateral-raise',
+    name: '원암 레터럴 레이즈',
+    muscle: 'shoulders',
+    v: [e('cable'), e('dumbbell'), g('stack')],
+  },
   { id: 'rear-delt-fly', name: '리어 델트 플라이', muscle: 'shoulders', v: [e('dumbbell'), e('cable'), ...stackAll()] },
   { id: 'face-pull', name: '페이스 풀', muscle: 'shoulders', v: [e('cable')] },
   { id: 'shrug', name: '슈러그', muscle: 'shoulders', v: [e('barbell'), e('dumbbell'), e('smith')] },
@@ -431,8 +438,9 @@ const SPEC: ExSpec[] = [
  * v3: 로우 로우(low-row) 추가
  * v4: 머신 T바 로우 분리. T바 로우의 브랜드 머신은 숨기고(SEED_V4_HIDDEN), 일반 머신은 스탠딩 거치대로 표시
  * v5: '머신 T바 로우' → '체스트 서포티드 T바 로우'로 이름 변경 (서서 하는 T바 로우와 구분)
+ * v6: 원암 레터럴 레이즈 추가
  */
-export const SEED_VERSION = 5;
+export const SEED_VERSION = 6;
 
 /** v4에서 숨긴 T바 로우 브랜드 머신 (기록이 없을 때만 숨김) */
 export const SEED_V4_HIDDEN = ['t-bar-row:m-hammer-plate', 't-bar-row:m-prime-plate', 't-bar-row:m-atlantis-plate'];
