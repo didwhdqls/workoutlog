@@ -11,17 +11,24 @@ export function newSet(partial: Partial<SetEntry> = {}): SetEntry {
 }
 
 // ─── 기구 이름 ───────────────────────────────────────────────
-/** 기구의 큰 제목: 브랜드(머신) 또는 기구 종류 */
+/** 브랜드를 고를 수 있는 기구 종류 (케이블·스미스도 브랜드마다 무게감이 다름) */
+export const BRANDABLE: Variant['equipment'][] = ['machine', 'cable', 'smith'];
+export const isBrandable = (eq: Variant['equipment']) => BRANDABLE.includes(eq);
+
+/** 기구의 큰 제목: 브랜드(머신·케이블·스미스) 또는 기구 종류 */
 export function variantTitle(v: Variant): string {
   if (v.label) return v.label;
   if (v.equipment === 'machine') return v.brand ?? (v.loading ? '일반 머신' : '머신');
+  if (v.brand && isBrandable(v.equipment)) return v.brand;
   return EQUIPMENT_LABEL[v.equipment];
 }
 
 /** 플레이트/핀, 모델명 등 부가 설명 */
 export function variantDetail(v: Variant): string {
   const parts: string[] = [];
-  if (v.label && v.equipment === 'machine' && v.brand) parts.push(v.brand);
+  if (v.label && v.brand && isBrandable(v.equipment)) parts.push(v.brand);
+  // 브랜드 케이블·스미스는 제목이 브랜드라 종류를 덧붙임 (예: 라이프피트니스 · 케이블)
+  if (v.equipment !== 'machine' && v.brand && isBrandable(v.equipment)) parts.push(EQUIPMENT_LABEL[v.equipment]);
   if (v.loading) parts.push(LOADING_LABEL[v.loading]);
   if (v.model) parts.push(v.model);
   return parts.join(' · ');

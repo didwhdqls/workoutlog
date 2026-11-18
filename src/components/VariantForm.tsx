@@ -5,6 +5,7 @@ import { useStore } from '../store';
 import type { Equipment, Loading, Variant, WeightUnit } from '../types';
 import { EQUIPMENT_LABEL, EQUIPMENT_ORDER } from '../types';
 import { variantSessions } from '../lib/stats';
+import { isBrandable } from '../lib/util';
 import { ask, askText } from './Dialog';
 import { Sheet } from './Sheet';
 
@@ -30,8 +31,14 @@ export function VariantForm({
   const addGym = useStore((s) => s.addGym);
   const exercise = useStore((s) => s.exercises.find((x) => x.id === exerciseId));
 
-  const [equipment, setEquipment] = useState<Equipment>(variant?.equipment ?? 'machine');
+  // 새 기구: 이 운동에 머신이 있으면 머신, 아니면 이 운동의 첫 기구 종류 (예: 페이스 풀 → 케이블)
+  const [equipment, setEquipment] = useState<Equipment>(() => {
+    if (variant) return variant.equipment;
+    const own = allVariants.filter((v) => v.exerciseId === exerciseId);
+    return own.some((v) => v.equipment === 'machine') || own.length === 0 ? 'machine' : own[0].equipment;
+  });
   const [loading, setLoading] = useState<Loading | undefined>(variant?.loading ?? (variant ? undefined : 'stack'));
+  const brandable = isBrandable(equipment);
   const [brand, setBrand] = useState(variant?.brand ?? '');
   const [model, setModel] = useState(variant?.model ?? '');
   const [label, setLabel] = useState(variant?.label ?? '');
@@ -67,7 +74,7 @@ export function VariantForm({
       exerciseId,
       equipment,
       // "Hammer Strength" 처럼 영어로 적어도 기존 "해머스트렝스"와 같은 브랜드로 저장
-      brand: isMachine && resolvedBrand ? resolvedBrand : undefined,
+      brand: brandable && resolvedBrand ? resolvedBrand : undefined,
       loading: isMachine ? loading : undefined,
       model: model.trim() || undefined,
       label: label.trim() || undefined,
@@ -120,8 +127,9 @@ export function VariantForm({
         </div>
       </div>
 
-      {isMachine && (
+      {brandable && (
         <>
+          {isMachine && (
           <div className="field">
             <label>무게 방식</label>
             <div className="seg">
@@ -133,8 +141,9 @@ export function VariantForm({
               </button>
             </div>
           </div>
+          )}
           <div className="field">
-            <label>브랜드</label>
+            <label>브랜드{isMachine ? '' : ' (선택)'}</label>
             <div className="chips wrap" style={{ marginBottom: 8 }}>
               {shownBrands.map((b) => (
                 <button key={b} className={'chip' + (brand === b ? ' on' : '')} onClick={() => setBrand(brand === b ? '' : b)}>
@@ -166,6 +175,11 @@ export function VariantForm({
             )}
             {typed && resolvedBrand === typed && !brandOptions.includes(typed) && (
               <div className="hint">새 브랜드로 저장돼요.</div>
+            )}
+            {!isMachine && !typed && (
+              <div className="hint">
+                {equipment === 'cable' ? '케이블도 브랜드마다 도르래 비율이 달라 무게감이 달라요.' : '스미스 머신도 브랜드마다 바 무게와 마찰이 달라요.'} 브랜드를 고르면 따로 기록돼요.
+              </div>
             )}
           </div>
         </>

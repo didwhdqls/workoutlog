@@ -5,7 +5,7 @@ import { useStore } from '../store';
 import type { Loading, SetEntry, Variant } from '../types';
 import { EQUIPMENT_LABEL, LOADING_LABEL } from '../types';
 import { topSet } from '../lib/stats';
-import { fmtSet, fmtShortDate, variantDetail, variantTitle } from '../lib/util';
+import { fmtSet, fmtShortDate, isBrandable, variantDetail, variantTitle } from '../lib/util';
 import { Icon } from './Icon';
 import { Sheet } from './Sheet';
 import { VariantForm } from './VariantForm';
@@ -18,6 +18,7 @@ interface Usage {
 
 /** 기구 목록이 이보다 길면 검색창을 보여 줍니다. */
 const SEARCH_THRESHOLD = 6;
+type QuickKind = { equipment: 'machine' | 'cable' | 'smith'; loading?: Loading };
 
 /** 운동 중 "어떤 기구로 하는지" 고르는 시트 */
 export function VariantPicker({
@@ -102,13 +103,18 @@ export function VariantPicker({
     if (!text || exercise?.track === 'time') return [];
     const known = new Set<string>(Object.values(BRANDS));
     for (const v of allVariants) if (v.brand) known.add(v.brand);
-    const out: { brand: string; loading: Loading; archived?: Variant }[] = [];
+    // 이 운동에 케이블·스미스 기구가 있으면 그 브랜드 버전도 제안 (예: 라이프피트니스 케이블)
+    const own = allVariants.filter((v) => v.exerciseId === exerciseId);
+    const kinds: QuickKind[] = [];
+    for (const eq of ['cable', 'smith'] as const) if (own.some((v) => v.equipment === eq)) kinds.push({ equipment: eq });
+    kinds.push({ equipment: 'machine', loading: 'stack' }, { equipment: 'machine', loading: 'plate' });
+    const out: (QuickKind & { brand: string; archived?: Variant })[] = [];
     for (const brand of known) {
       if (!brandMatchesWithLegacy(brand, text)) continue;
-      for (const loading of ['stack', 'plate'] as Loading[]) {
-        const existing = allVariants.find((v) => v.exerciseId === exerciseId && v.brand === brand && v.loading === loading);
+      for (const k of kinds) {
+        const existing = own.find((v) => v.brand === brand && v.equipment === k.equipment && v.loading === k.loading);
         if (existing && !existing.archived) continue;
-        out.push({ brand, loading, archived: existing });
+        out.push({ ...k, brand, archived: existing });
       }
       if (out.length >= 8) break;
     }
@@ -146,7 +152,7 @@ export function VariantPicker({
         )}
       </p>
 
-      {all.length > SEARCH_THRESHOLD && (
+      {(all.length > SEARCH_THRESHOLD || all.some((v) => isBrandable(v.equipment))) && exercise?.track !== 'time' && (
         <div className="search" style={{ marginBottom: 10 }}>
           <Icon name="search" size={18} />
           <input
@@ -229,16 +235,16 @@ export function VariantPicker({
             바로 등록
           </div>
           <div className="list">
-            {quickAdds.map(({ brand, loading, archived }) => (
+            {quickAdds.map(({ brand, equipment, loading, archived }) => (
               <button
-                key={brand + loading}
+                key={brand + equipment + (loading ?? '')}
                 className="list-item"
                 onClick={() => {
                   if (archived) {
                     updateVariant(archived.id, { archived: false });
                     pick(archived.id);
                   } else {
-                    pick(addVariant({ exerciseId, equipment: 'machine', brand, loading, unit: 'kg', gymId: null }));
+                    pick(addVariant({ exerciseId, equipment, brand, ...(loading ? { loading } : {}), unit: 'kg', gymId: null }));
                   }
                 }}
               >
@@ -248,7 +254,7 @@ export function VariantPicker({
                 <div className="grow">
                   <div className="title">{brand}</div>
                   <div className="sub">
-                    {LOADING_LABEL[loading]} 머신
+                    {loading ? `${LOADING_LABEL[loading]} 머신` : EQUIPMENT_LABEL[equipment]}
                     {brandNote(brand) ? ` · ${brandNote(brand)}` : ''}
                     {archived ? ' · 숨겨 둔 기구 다시 표시' : ''}
                   </div>
