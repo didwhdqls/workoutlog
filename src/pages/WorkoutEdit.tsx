@@ -9,7 +9,7 @@ import { ReorderSheet } from '../components/ReorderSheet';
 import { ActionSheet } from '../components/Sheet';
 import { VariantPicker } from '../components/VariantPicker';
 import { fromInputs, toDateInput, toTimeInput } from '../components/WhenSheet';
-import { defaultVariantId, latestBodyweight } from '../lib/stats';
+import { defaultVariantId, isPerSide, latestBodyweight, loadMode } from '../lib/stats';
 import { newSet, uid, unitLabel, variantName } from '../lib/util';
 import { useMaps, useStore } from '../store';
 import type { SetEntry, SetKind, Workout, WorkoutExercise } from '../types';
@@ -218,6 +218,7 @@ function EditCard({
   const variant = entry.variantId ? maps.v.get(entry.variantId) : undefined;
   const track = exercise?.track ?? 'weight';
   const unit = variant?.unit ?? 'kg';
+  const perSide = isPerSide(entry.exerciseId, variant) && loadMode(entry, exercise, variant) === 'external';
   const [menu, setMenu] = useState(false);
   const [pickVariant, setPickVariant] = useState(false);
   const [replacing, setReplacing] = useState(false);
@@ -264,7 +265,7 @@ function EditCard({
         <thead>
           <tr>
             <th style={{ width: 40 }}>세트</th>
-            {track === 'weight' && <th>{unitLabel(unit)}</th>}
+            {track === 'weight' && <th>{perSide ? '한쪽 ' : ''}{unitLabel(unit)}</th>}
             {track !== 'time' && <th>회</th>}
             {track === 'time' && <th>시간</th>}
             <th style={{ width: 42 }} />

@@ -90,6 +90,11 @@ export interface Variant {
   unit: WeightUnit;
   /** 세팅 메모: 시트 높이, 패드 위치 등 */
   memo?: string;
+  /**
+   * 입력하는 무게가 한쪽 무게인지 (true면 볼륨 ×2).
+   * 비워 두면 기본값: 덤벨은 한쪽(덤벨 1개) 무게, 원암 운동은 한쪽씩 양쪽 다 하므로 한쪽 무게.
+   */
+  perSide?: boolean;
   custom?: boolean;
   archived?: boolean;
 }

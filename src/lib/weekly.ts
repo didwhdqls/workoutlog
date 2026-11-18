@@ -1,6 +1,6 @@
 import { subMuscleOf, type SubMuscle } from '../data/muscles';
 import type { Exercise, MuscleGroup, Variant, Workout } from '../types';
-import { isWorkSet, loadMode, setVolumeKg, workoutBw } from './stats';
+import { isWorkSet, loadFactor, loadMode, setVolumeKg, workoutBw } from './stats';
 
 // ─── 주 경계 ─────────────────────────────────────────────────
 /** ts 가 속한 주의 시작(자정, 로컬 시간). weekStart 1 = 월요일, 0 = 일요일 */
@@ -91,6 +91,7 @@ export function computeWeek(
       const v = entry.variantId ? variants.get(entry.variantId) : undefined;
       const unit = v?.unit || 'kg';
       const mode = loadMode(entry, x, v);
+      const f = loadFactor(entry.exerciseId, v);
       const sub = subMuscleOf(x);
 
       for (const s of entry.sets) {
@@ -99,7 +100,7 @@ export function computeWeek(
           out.cardioSec += s.time ?? 0;
           continue;
         }
-        const kg = setVolumeKg(s, mode, unit, bw);
+        const kg = setVolumeKg(s, mode, unit, bw, f);
         const b = out.muscles.get(muscle) ?? emptyBucket();
         b.sets++;
         b.volumeKg += kg;
@@ -162,11 +163,12 @@ export function periodSeries(
       const v = entry.variantId ? variants.get(entry.variantId) : undefined;
       const unit = v?.unit || 'kg';
       const mode = loadMode(entry, x, v);
+      const f = loadFactor(entry.exerciseId, v);
       for (const s of entry.sets) {
         if (!isWorkSet(s)) continue;
         touched = true;
         p.sets++;
-        p.volumeKg += setVolumeKg(s, mode, unit, bw);
+        p.volumeKg += setVolumeKg(s, mode, unit, bw, f);
       }
     }
     if (muscle === 'all' || touched) {

@@ -7,7 +7,7 @@ import { userAliases } from '../lib/search';
 import { Icon } from '../components/Icon';
 import { LineChart, type Point } from '../components/LineChart';
 import { VariantForm } from '../components/VariantForm';
-import { summarizeVariant, topSet, variantSessions, type VariantSummary } from '../lib/stats';
+import { loadFactor, summarizeVariant, topSet, variantSessions, type VariantSummary } from '../lib/stats';
 import { fmtDate, fmtDuration, fmtNum, fmtSet, fmtShortDate, unitLabel, variantDetail, variantTitle } from '../lib/util';
 import { useMaps, useStore } from '../store';
 import { GRIP_LABEL, type Grip, type MuscleGroup, type Variant } from '../types';
@@ -292,8 +292,14 @@ export function VariantDetail() {
   }, [workouts, variantId]);
   const [gripFilter, setGripFilter] = useState<Grip | 'default' | 'all'>('all');
   const sessions = useMemo(
-    () => variantSessions(workouts, variantId, gripFilter === 'all' ? undefined : gripFilter === 'default' ? null : gripFilter),
-    [workouts, variantId, gripFilter],
+    () =>
+      variantSessions(
+        workouts,
+        variantId,
+        gripFilter === 'all' ? undefined : gripFilter === 'default' ? null : gripFilter,
+        loadFactor(id, variant),
+      ),
+    [workouts, variantId, gripFilter, id, variant],
   );
   const sum = useMemo(() => summarizeVariant(sessions, track), [sessions, track]);
 

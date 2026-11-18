@@ -4,7 +4,7 @@ import { BRANDS } from '../data/seed';
 import { useStore } from '../store';
 import type { Equipment, Loading, Variant, WeightUnit } from '../types';
 import { EQUIPMENT_LABEL, EQUIPMENT_ORDER } from '../types';
-import { variantSessions } from '../lib/stats';
+import { defaultPerSide, variantSessions } from '../lib/stats';
 import { isBrandable } from '../lib/util';
 import { ask, askText } from './Dialog';
 import { Sheet } from './Sheet';
@@ -45,6 +45,11 @@ export function VariantForm({
   const [gymId, setGymId] = useState<string | null>(variant ? variant.gymId ?? null : defaultGymId ?? null);
   const [unit, setUnit] = useState<WeightUnit>(variant?.unit ?? 'kg');
   const [memo, setMemo] = useState(variant?.memo ?? '');
+  // 입력 무게가 한쪽 무게인지. 직접 고르지 않으면 기구 종류·운동에 따른 기본값
+  const [perSidePick, setPerSidePick] = useState<boolean | undefined>(variant?.perSide);
+  const perSideDefault = defaultPerSide(exerciseId, equipment);
+  const perSide = perSidePick ?? perSideDefault;
+  const showPerSide = exercise?.track !== 'time' && exercise?.track !== 'reps' && equipment !== 'bodyweight';
 
   const brandOptions = useMemo(() => {
     const set = new Set<string>(Object.values(BRANDS));
@@ -81,6 +86,8 @@ export function VariantForm({
       gymId,
       unit,
       memo: memo.trim() || undefined,
+      // 기본값과 같으면 저장하지 않음 (기본 규칙이 바뀌어도 따라가게)
+      perSide: showPerSide && perSide !== perSideDefault ? perSide : undefined,
     };
     if (variant) {
       updateVariant(variant.id, data);
@@ -214,6 +221,26 @@ export function VariantForm({
         </div>
         <div className="hint">특정 헬스장에만 있는 기구라면 지정하세요. 그 헬스장에서 운동할 때 먼저 보여 줍니다.</div>
       </div>
+
+      {showPerSide && (
+        <div className="field">
+          <label>입력하는 무게</label>
+          <div className="seg">
+            <button className={!perSide ? 'on' : ''} onClick={() => setPerSidePick(false)}>
+              전체 무게
+            </button>
+            <button className={perSide ? 'on' : ''} onClick={() => setPerSidePick(true)}>
+              한쪽 무게 (볼륨 ×2)
+            </button>
+          </div>
+          <div className="hint">
+            {perSide
+              ? '덤벨 1개 무게나 한쪽 팔·다리 무게로 적어요. 볼륨은 두 배로 계산돼요. 예: 5kg × 10회 → 100kg'
+              : '바벨처럼 들어 올린 전체 무게로 적어요. 예: 60kg × 10회 → 600kg'}
+            {perSideDefault ? '' : ' 한쪽씩 따로 움직이는 기구(아이소 래터럴 등)에 한쪽 무게를 적는다면 "한쪽 무게"를 고르세요.'}
+          </div>
+        </div>
+      )}
 
       <div className="field">
         <label>무게 단위</label>

@@ -39,14 +39,34 @@ export function loadMode(entry: WorkoutExercise, ex: Exercise | undefined, varia
   return 'external';
 }
 
-/** 세트 하나의 볼륨(kg). bw는 그날 체중 (없으면 맨몸·어시스트 운동은 0) */
-export function setVolumeKg(s: SetEntry, mode: LoadMode, unit: WeightUnit, bw: number | null): number {
+// ─── 한쪽 무게 (볼륨 ×2) ─────────────────────────────────────
+/** 덤벨 1개를 두 손으로 드는 운동: 덤벨이어도 입력 무게가 전체 무게 */
+const SINGLE_DUMBBELL = new Set(['overhead-triceps']);
+/** 한쪽씩 양쪽을 다 하는 운동: 어떤 기구든 입력 무게는 한쪽 무게 */
+const UNILATERAL = new Set(['dumbbell-row', 'one-arm-lateral-raise']);
+
+/** 기구를 따로 정하지 않았을 때의 기본값 */
+export function defaultPerSide(exerciseId: string, equipment: Variant['equipment'] | undefined): boolean {
+  if (UNILATERAL.has(exerciseId)) return true;
+  return equipment === 'dumbbell' && !SINGLE_DUMBBELL.has(exerciseId);
+}
+export function isPerSide(exerciseId: string, v: Variant | undefined): boolean {
+  return v?.perSide ?? defaultPerSide(exerciseId, v?.equipment);
+}
+/** 볼륨 계산 배수: 한쪽 무게로 적는 기구는 2 (예: 덤벨 5kg 레터럴 레이즈 10회 = 100kg) */
+export const loadFactor = (exerciseId: string, v: Variant | undefined) => (isPerSide(exerciseId, v) ? 2 : 1);
+
+/**
+ * 세트 하나의 볼륨(kg). bw는 그날 체중 (없으면 맨몸·어시스트 운동은 0).
+ * factor: 한쪽 무게로 적은 기구면 2 (맨몸·어시스트는 체중 기준이라 쓰지 않음)
+ */
+export function setVolumeKg(s: SetEntry, mode: LoadMode, unit: WeightUnit, bw: number | null, factor = 1): number {
   const reps = s.reps ?? 0;
   if (reps <= 0) return 0;
   const w = s.weight != null ? toKg(s.weight, unit) : 0;
   if (mode === 'bodyweight') return bw ? (bw + (w ?? 0)) * reps : 0;
   if (mode === 'assisted') return bw && w != null ? Math.max(0, bw - w) * reps : 0;
-  return s.weight != null && w != null ? w * reps : 0;
+  return s.weight != null && w != null ? w * reps * factor : 0;
 }
 
 /** 가장 최근에 기록한 체중 (기록이 최신순이라 처음 나오는 값) */
@@ -156,19 +176,19 @@ export interface Session {
 }
 
 /** grip을 주면 그 그립 기록만 (null = 기본 그립), 생략하면 그립 상관없이 전부 */
-export function variantSessions(workouts: Workout[], variantId: string, grip?: Grip | null): Session[] {
+export function variantSessions(workouts: Workout[], variantId: string, grip?: Grip | null, factor = 1): Session[] {
   const out: Session[] = [];
   for (const w of workouts) {
     const sets = w.exercises
       .filter((x) => x.variantId === variantId && (grip === undefined || sameGrip(x.grip, grip)))
       .flatMap((x) => x.sets.filter((s) => s.done));
     if (sets.length === 0) continue;
-    out.push(summarize(w.id, w.startedAt, sets));
+    out.push(summarize(w.id, w.startedAt, sets, factor));
   }
   return out;
 }
 
-function summarize(workoutId: string, date: number, sets: SetEntry[]): Session {
+function summarize(workoutId: string, date: number, sets: SetEntry[], factor = 1): Session {
   let maxWeight: number | null = null;
   let bestE1rm: number | null = null;
   let maxReps: number | null = null;
@@ -181,7 +201,7 @@ function summarize(workoutId: string, date: number, sets: SetEntry[]): Session {
     if (e != null) bestE1rm = Math.max(bestE1rm ?? -Infinity, e);
     if (s.reps != null) maxReps = Math.max(maxReps ?? -Infinity, s.reps);
     if (s.time != null) maxTime = Math.max(maxTime ?? -Infinity, s.time);
-    volume += (s.weight ?? 0) * (s.reps ?? 0);
+    volume += (s.weight ?? 0) * (s.reps ?? 0) * factor;
   }
   return { workoutId, date, sets, maxWeight, bestE1rm, maxReps, maxTime, volume };
 }
@@ -275,7 +295,8 @@ export function workoutVolumeKg(
     const v = entry.variantId ? variants.get(entry.variantId) : undefined;
     const mode = loadMode(entry, ex?.get(entry.exerciseId), v);
     const unit = v?.unit || 'kg';
-    for (const s of entry.sets) if (isWorkSet(s)) total += setVolumeKg(s, mode, unit, bw);
+    const f = loadFactor(entry.exerciseId, v);
+    for (const s of entry.sets) if (isWorkSet(s)) total += setVolumeKg(s, mode, unit, bw, f);
   }
   return total;
 }

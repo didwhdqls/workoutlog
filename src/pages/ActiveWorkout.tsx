@@ -11,7 +11,7 @@ import { ActionSheet } from '../components/Sheet';
 import { VariantForm } from '../components/VariantForm';
 import { VariantPicker } from '../components/VariantPicker';
 import { WhenSheet, whenText } from '../components/WhenSheet';
-import { findPrevious, loadMode } from '../lib/stats';
+import { findPrevious, isPerSide, loadMode } from '../lib/stats';
 import { unlockAudio } from '../lib/sound';
 import { fmtDuration, fmtNum, fmtRest, fmtShortDate, unitLabel, variantName } from '../lib/util';
 import { useMaps, useStore } from '../store';
@@ -286,6 +286,8 @@ function ExerciseCard({
   const variant = entry.variantId ? maps.v.get(entry.variantId) : undefined;
   const track = exercise?.track ?? 'weight';
   const unit = variant?.unit ?? 'kg';
+  const perSide = isPerSide(entry.exerciseId, variant);
+  const mode = loadMode(entry, exercise, variant);
 
   const [menu, setMenu] = useState(false);
   const [restMenu, setRestMenu] = useState(false);
@@ -381,7 +383,12 @@ function ExerciseCard({
           <tr>
             <th style={{ width: 40 }}>세트</th>
             <th>이전</th>
-            {track === 'weight' && <th style={{ width: 76 }}>{unitLabel(unit)}</th>}
+            {track === 'weight' && (
+              <th style={{ width: 76 }} title={perSide ? '한쪽 무게로 적어요. 볼륨은 ×2로 계산돼요.' : undefined}>
+                {perSide && mode === 'external' ? '한쪽 ' : ''}
+                {unitLabel(unit)}
+              </th>
+            )}
             {track !== 'time' && <th style={{ width: 76 }}>회</th>}
             {track === 'time' && <th style={{ width: 90 }}>시간</th>}
             <th style={{ width: 42 }}>
