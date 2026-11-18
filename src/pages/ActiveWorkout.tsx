@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { ask, askText } from '../components/Dialog';
 import { ExercisePicker } from '../components/ExercisePicker';
@@ -10,11 +10,12 @@ import { RestPicker } from '../components/RestPicker';
 import { ActionSheet } from '../components/Sheet';
 import { VariantForm } from '../components/VariantForm';
 import { VariantPicker } from '../components/VariantPicker';
+import { WhenSheet, whenText } from '../components/WhenSheet';
 import { findPrevious, loadMode } from '../lib/stats';
 import { unlockAudio } from '../lib/sound';
 import { fmtDuration, fmtNum, fmtRest, fmtShortDate, unitLabel, variantName } from '../lib/util';
 import { useMaps, useStore } from '../store';
-import type { SetEntry, SetKind, WorkoutExercise } from '../types';
+import type { SetEntry, SetKind, Workout, WorkoutExercise } from '../types';
 
 
 export function Elapsed({ since }: { since: number }) {
@@ -24,6 +25,11 @@ export function Elapsed({ since }: { since: number }) {
     return () => clearInterval(t);
   }, []);
   return <span className="tnum">{fmtDuration((now - since) / 1000)}</span>;
+}
+
+/** 진행 중 운동의 시간: 지금 하는 중이면 경과 시간, 지난 날짜로 기록 중이면 그 날짜 */
+export function ActiveTime({ w }: { w: Pick<Workout, 'startedAt' | 'endedAt'> }) {
+  return w.endedAt != null ? <span>{whenText(w.startedAt, w.endedAt)}</span> : <Elapsed since={w.startedAt} />;
 }
 
 export function ActiveWorkout() {
@@ -39,11 +45,16 @@ export function ActiveWorkout() {
   const navigate = useNavigate();
   const [picking, setPicking] = useState(false);
   const [gymMenu, setGymMenu] = useState(false);
+  const [whenOpen, setWhenOpen] = useState(false);
+  const setActiveTime = useStore((s) => s.setActiveTime);
   const [reordering, setReordering] = useState(false);
   const reorderEntries = useStore((s) => s.reorderEntries);
   const maps = useMaps();
+  // 완료 직후 기록 화면으로 가는 중이면 홈으로 튕기지 않게
+  const finishing = useRef(false);
 
-  if (!active) return <Navigate to="/" replace />;
+  if (!active) return finishing.current ? null : <Navigate to="/" replace />;
+  const past = active.endedAt != null;
   const gym = gyms.find((g) => g.id === active.gymId);
   // 맨몸·어시스트 운동이 있으면 체중이 볼륨에 필요
   const needsBw = active.exercises.some(
@@ -52,7 +63,7 @@ export function ActiveWorkout() {
 
   const askBodyweight = async () => {
     const v = await askText({
-      title: '오늘 체중',
+      title: past ? '그날 체중' : '오늘 체중',
       message: '풀업·딥스 같은 맨몸 운동 볼륨(체중 × 횟수)에 써요. 다음 운동엔 이 값이 미리 채워져요.',
       value: active.bodyweightKg ? String(active.bodyweightKg) : '',
       placeholder: '예: 72.5',
@@ -92,8 +103,10 @@ export function ActiveWorkout() {
       }))
     )
       return;
+    finishing.current = true;
     const id = finishWorkout();
     if (id) navigate(`/history/${id}?done=1`, { replace: true });
+    else finishing.current = false;
   };
 
   const cancelWorkout = async () => {
@@ -123,9 +136,11 @@ export function ActiveWorkout() {
             style={{ background: 'transparent', padding: '2px 0', fontSize: 17, fontWeight: 700 }}
             aria-label="운동 이름"
           />
-          <div className="tiny muted">
-            <Elapsed since={active.startedAt} />
-          </div>
+          <button className="tiny muted when-btn" onClick={() => setWhenOpen(true)} aria-label="운동 날짜·시간 바꾸기">
+            {active.endedAt == null && <span>오늘 · </span>}
+            <ActiveTime w={active} />
+            <Icon name="down" size={12} />
+          </button>
         </div>
         <button className="btn ok sm" onClick={finish}>
           완료
@@ -144,7 +159,7 @@ export function ActiveWorkout() {
           style={needsBw && !active.bodyweightKg ? { color: 'var(--warn)', borderColor: 'var(--warn)' } : undefined}
         >
           <Icon name="scale" size={15} />
-          {active.bodyweightKg ? `체중 ${active.bodyweightKg}kg` : '오늘 체중'}
+          {active.bodyweightKg ? `체중 ${active.bodyweightKg}kg` : past ? '그날 체중' : '오늘 체중'}
         </button>
       </div>
       {!gym && gyms.length === 0 && (
@@ -193,7 +208,7 @@ export function ActiveWorkout() {
         <div className="empty">
           아직 운동이 없어요.
           <br />
-          아래 버튼으로 오늘 할 운동을 추가하세요.
+          아래 버튼으로 {past ? '그날 한' : '오늘 할'} 운동을 추가하세요.
         </div>
       )}
 
@@ -205,6 +220,17 @@ export function ActiveWorkout() {
       </button>
 
       {picking && <ExercisePicker onPick={addExercises} onClose={() => setPicking(false)} />}
+      {whenOpen && (
+        <WhenSheet
+          title="언제 한 운동인가요?"
+          initial={{ startedAt: active.startedAt, endedAt: active.endedAt ?? null }}
+          onConfirm={(s, e) => {
+            setActiveTime(s, e);
+            setWhenOpen(false);
+          }}
+          onClose={() => setWhenOpen(false)}
+        />
+      )}
       {gymMenu && (
         <ActionSheet
           title="오늘 운동하는 헬스장"
@@ -247,7 +273,13 @@ function ExerciseCard({
   onReorder: () => void;
 }) {
   const maps = useMaps();
-  const workouts = useStore((s) => s.workouts);
+  const allWorkouts = useStore((s) => s.workouts);
+  // 지난 날짜로 기록 중이면 그날 이전 기록만 '이전 기록'으로 봄
+  const before = useStore((s) => (s.active?.endedAt != null ? s.active.startedAt : null));
+  const workouts = useMemo(
+    () => (before == null ? allWorkouts : allWorkouts.filter((w) => w.startedAt < before)),
+    [allWorkouts, before],
+  );
   const gyms = useStore((s) => s.gyms);
   const a = useStore.getState;
   const exercise = maps.ex.get(entry.exerciseId);
@@ -290,7 +322,8 @@ function ExerciseCard({
   const check = (s: SetEntry) => {
     unlockAudio();
     const nowDone = a().toggleSet(entry.id, s.id);
-    if (nowDone && entry.restSec > 0) a().startRest(entry.restSec, exercise?.name ?? '');
+    // 지난 날짜 기록은 몰아서 적는 중이라 휴식 타이머를 띄우지 않음
+    if (nowDone && entry.restSec > 0 && a().active?.endedAt == null) a().startRest(entry.restSec, exercise?.name ?? '');
   };
 
   /** 마지막 세트 빼기. 완료한 세트면 한 번 물어봄 */

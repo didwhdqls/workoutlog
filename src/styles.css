@@ -1199,3 +1199,14 @@ tr.done .num-in {
   font-weight: 600;
   font-size: 13px;
 }
+
+/* 운동 화면 제목 아래: 언제 한 운동인지 (눌러서 날짜 바꾸기) */
+.when-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+}

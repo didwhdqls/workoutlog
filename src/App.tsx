@@ -3,7 +3,7 @@ import { HashRouter, NavLink, Route, Routes, useLocation, useNavigate } from 're
 import { DialogHost } from './components/Dialog';
 import { Icon, type IconName } from './components/Icon';
 import { RestTimer } from './components/RestTimer';
-import { ActiveWorkout, Elapsed } from './pages/ActiveWorkout';
+import { ActiveTime, ActiveWorkout } from './pages/ActiveWorkout';
 import { ExerciseDetail, Library, VariantDetail } from './pages/Exercises';
 import { History, WorkoutDetail } from './pages/History';
 import { Home } from './pages/Home';
@@ -58,7 +58,7 @@ function Shell() {
               {active.name}
             </span>
             <span className="small" style={{ opacity: 0.9 }}>
-              <Elapsed since={active.startedAt} />
+              <ActiveTime w={active} />
             </span>
             <Icon name="up" size={18} />
           </button>

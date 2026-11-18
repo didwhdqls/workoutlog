@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ask, askText } from '../components/Dialog';
 import { Icon } from '../components/Icon';
 import { ReviewCard, reviewSummary } from '../components/ReviewCard';
+import { WhenSheet } from '../components/WhenSheet';
 import { findPRs, fmtVolume, latestBodyweight, workoutSetCount, workoutVolumeKg } from '../lib/stats';
 import { dayKey, dayLabel, parseDayKey, workoutsByDay } from '../lib/calendar';
 import { fmtDate, fmtDurationLong, fmtSet, fmtTime, variantName } from '../lib/util';
@@ -63,6 +64,9 @@ export function History() {
   // ?d=YYYY-MM-DD 로 들어오면 그날을 고른 상태 (홈의 주간 달력에서 누를 때)
   const picked = params.get('d');
   const pickedDate = picked ? parseDayKey(picked) : null;
+  const navigate = useNavigate();
+  const startWorkout = useStore((s) => s.startWorkout);
+  const [backdating, setBackdating] = useState(false);
   const [cursor, setCursor] = useState(() => {
     const d = pickedDate ?? new Date();
     return { y: d.getFullYear(), m: d.getMonth() };
@@ -133,7 +137,7 @@ export function History() {
               <button
                 key={d}
                 className={cls}
-                disabled={!info}
+                disabled={!info && k > todayKey}
                 onClick={() => setParams(k === picked ? {} : { d: k }, { replace: true })}
                 aria-label={`${cursor.m + 1}월 ${d}일${info ? ` ${dayLabel(info, routineMap)} 운동 ${info.workouts.length}회` : ''}`}
               >
@@ -166,7 +170,30 @@ export function History() {
           </button>
         )}
       </div>
-      {shown.length === 0 && <div className="empty">이 달에는 기록이 없어요.</div>}
+      {shown.length === 0 && <div className="empty">{picked ? '이 날에는 기록이 없어요.' : '이 달에는 기록이 없어요.'}</div>}
+      {picked && picked <= todayKey && !active && (
+        <button className="btn soft block" style={{ marginBottom: 12 }} onClick={() => setBackdating(true)}>
+          <Icon name="plus" size={16} /> 이 날 운동 기록하기
+        </button>
+      )}
+      {picked && active && !shown.length && (
+        <p className="tiny faint" style={{ textAlign: 'center' }}>
+          진행 중인 운동을 마치면 이 날짜로 새 기록을 남길 수 있어요.
+        </p>
+      )}
+      {backdating && picked && (
+        <WhenSheet
+          title={`${pickedDate!.getMonth() + 1}월 ${pickedDate!.getDate()}일 운동 기록`}
+          okLabel="이 날짜로 기록 시작"
+          allowLive={picked === todayKey}
+          defaultDate={picked}
+          onConfirm={(s, e) => {
+            startWorkout(e == null ? {} : { at: { startedAt: s, endedAt: e } });
+            navigate('/workout');
+          }}
+          onClose={() => setBackdating(false)}
+        />
+      )}
       {shown.map((w) => (
         <WorkoutCard key={w.id} w={w} />
       ))}

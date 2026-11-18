@@ -8,6 +8,7 @@ import { NumInput, TimeInput } from '../components/NumInput';
 import { ReorderSheet } from '../components/ReorderSheet';
 import { ActionSheet } from '../components/Sheet';
 import { VariantPicker } from '../components/VariantPicker';
+import { fromInputs, toDateInput, toTimeInput } from '../components/WhenSheet';
 import { defaultVariantId, latestBodyweight } from '../lib/stats';
 import { newSet, uid, unitLabel, variantName } from '../lib/util';
 import { useMaps, useStore } from '../store';
@@ -16,20 +17,6 @@ import type { SetEntry, SetKind, Workout, WorkoutExercise } from '../types';
 const KIND_LABEL: Record<SetKind, string> = { normal: '일반 세트', warmup: '워밍업', drop: '드롭 세트', failure: '실패 지점까지' };
 const KIND_SHORT: Record<SetKind, string> = { normal: '', warmup: 'W', drop: 'D', failure: 'F' };
 
-const pad = (n: number) => String(n).padStart(2, '0');
-const toDateInput = (ts: number) => {
-  const d = new Date(ts);
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-};
-const toTimeInput = (ts: number) => {
-  const d = new Date(ts);
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-};
-const fromInputs = (date: string, time: string) => {
-  const [y, mo, d] = date.split('-').map(Number);
-  const [h, mi] = time.split(':').map(Number);
-  return new Date(y, (mo || 1) - 1, d || 1, h || 0, mi || 0).getTime();
-};
 
 /** 완료한 운동 기록 고치기 (/history/:id/edit). 저장 전까지는 초안만 바뀜 */
 export function WorkoutEdit() {
@@ -103,7 +90,7 @@ function Editor({ original }: { original: Workout }) {
       <div className="card edit-when">
         <label>
           <span>날짜</span>
-          <input type="date" value={date} onChange={(e) => (setDate(e.target.value), setDirty(true))} />
+          <input type="date" value={date} max={toDateInput(Date.now())} onChange={(e) => (setDate(e.target.value), setDirty(true))} />
         </label>
         <label>
           <span>시작</span>

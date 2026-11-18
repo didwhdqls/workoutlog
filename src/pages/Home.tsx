@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { fmtVolume, latestBodyweight } from '../lib/stats';
@@ -9,7 +9,8 @@ const DOW = ['일', '월', '화', '수', '목', '금', '토'];
 import { fmtDate, fmtDurationLong } from '../lib/util';
 import { useMaps, useStore } from '../store';
 import { MUSCLE_LABEL } from '../types';
-import { Elapsed } from './ActiveWorkout';
+import { ActiveTime } from './ActiveWorkout';
+import { WhenSheet } from '../components/WhenSheet';
 import { WorkoutCard } from './History';
 
 export function Home() {
@@ -41,8 +42,9 @@ export function Home() {
     [routines],
   );
 
-  const start = (routineId?: string) => {
-    startWorkout({ routineId });
+  const [backdating, setBackdating] = useState(false);
+  const start = (routineId?: string, at?: { startedAt: number; endedAt: number }) => {
+    startWorkout({ routineId, at });
     navigate('/workout');
   };
 
@@ -68,15 +70,29 @@ export function Home() {
           </div>
           <div style={{ fontSize: 20, fontWeight: 800, marginTop: 4 }}>{active.name}</div>
           <div className="row small" style={{ marginTop: 2, opacity: 0.9 }}>
-            <Elapsed since={active.startedAt} /> · {active.exercises.length}개 운동
+            <ActiveTime w={active} /> · {active.exercises.length}개 운동
             <span className="grow" />
             이어하기 <Icon name="chevron" size={16} />
           </div>
         </Link>
       ) : (
-        <button className="btn primary block" style={{ height: 54, fontSize: 16 }} onClick={() => start()}>
-          <Icon name="plus" /> 빈 운동 시작
-        </button>
+        <>
+          <button className="btn primary block" style={{ height: 54, fontSize: 16 }} onClick={() => start()}>
+            <Icon name="plus" /> 빈 운동 시작
+          </button>
+          <button className="btn ghost block sm" style={{ marginTop: 6 }} onClick={() => setBackdating(true)}>
+            <Icon name="calendar" size={15} /> 지난 운동 기록하기
+          </button>
+        </>
+      )}
+      {backdating && (
+        <WhenSheet
+          title="언제 한 운동인가요?"
+          okLabel="이 날짜로 기록 시작"
+          allowLive={false}
+          onConfirm={(s, e) => start(undefined, { startedAt: s, endedAt: e ?? s })}
+          onClose={() => setBackdating(false)}
+        />
       )}
 
       <div className="section-title">
@@ -92,7 +108,7 @@ export function Home() {
           const k = dayKey(day.getTime());
           const info = byDay.get(k);
           const cls = ['wd', info && 'has', k === todayKey && 'today', k === activeKey && 'live'].filter(Boolean).join(' ');
-          const label = `${day.getMonth() + 1}월 ${day.getDate()}일${info ? ` ${dayLabel(info, routineMap)}` : ''}`;
+          const label = `${day.getMonth() + 1}월 ${day.getDate()}일${info ? ` ${dayLabel(info, routineMap)}` : ' 기록 없음'}`;
           const body = (
             <>
               <span>{DOW[day.getDay()]}</span>
@@ -100,7 +116,7 @@ export function Home() {
               <span className="m">{info ? dayLabel(info, routineMap) : k === activeKey ? '진행' : ''}</span>
             </>
           );
-          return info ? (
+          return info || k <= todayKey ? (
             <Link key={k} to={`/history?d=${k}`} className={cls} aria-label={label}>
               {body}
             </Link>

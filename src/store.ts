@@ -49,7 +49,10 @@ interface Actions {
   deleteRoutine: (id: string) => void;
   routineFromWorkout: (workoutId: string, name: string) => string;
   // 진행 중 운동
-  startWorkout: (opts?: { routineId?: string; copyOf?: string }) => void;
+  /** at: 지난 날짜로 기록할 때 시작·끝 시각. 없으면 지금부터 타이머 */
+  startWorkout: (opts?: { routineId?: string; copyOf?: string; at?: { startedAt: number; endedAt: number } }) => void;
+  /** 진행 중 운동의 날짜·시간 바꾸기. endedAt이 null이면 '지금 하는 중'(타이머) */
+  setActiveTime: (startedAt: number, endedAt: number | null) => void;
   setActiveGym: (gymId: string | null) => void;
   renameActive: (name: string) => void;
   /** 오늘 체중 (null = 지움) */
@@ -113,6 +116,8 @@ export const useStore = create<Store>()(
   persist(
     immer((set, get) => {
       const entry = (s: DataState, id: string) => s.active?.exercises.find((x) => x.id === id);
+      /** 이전 기록을 찾을 범위: 지난 날짜로 기록 중이면 그날 이전 운동만 */
+      const history = (s: DataState) => (s.active?.endedAt != null ? s.workouts.filter((w) => w.startedAt < s.active!.startedAt) : s.workouts);
 
       /** 새 운동 항목: 기구 자동 선택 + 이전 기록 세트 수만큼 빈 세트 */
       const makeEntry = (
@@ -122,10 +127,11 @@ export const useStore = create<Store>()(
         fallback: string | null = null,
         gripOverride?: Grip,
       ): WorkoutExercise => {
-        const variantId = pickVariant(s.workouts, s.variants, exerciseId, gymId, fallback);
+        const past = history(s);
+        const variantId = pickVariant(past, s.variants, exerciseId, gymId, fallback);
         // 그립: 지정한 게 있으면 그것, 없으면 이 기구로 지난번에 쓴 그립
-        const grip = gripOverride ?? lastGrip(s.workouts, exerciseId, variantId);
-        const prev = findPrevious(s.workouts, exerciseId, variantId, grip);
+        const grip = gripOverride ?? lastGrip(past, exerciseId, variantId);
+        const prev = findPrevious(past, exerciseId, variantId, grip);
         const n = prev ? Math.min(prev.entry.sets.filter((x) => x.done).length, 10) : 3;
         return {
           id: uid(),
@@ -224,7 +230,7 @@ export const useStore = create<Store>()(
           set((s) => {
             if (s.active) return;
             const gymId = s.settings.lastGymId && s.gyms.some((g) => g.id === s.settings.lastGymId) ? s.settings.lastGymId : null;
-            const now = Date.now();
+            const now = opts.at?.startedAt ?? Date.now();
             const w: Workout = {
               id: 'w-' + uid(),
               name: defaultWorkoutName(now),
@@ -233,15 +239,18 @@ export const useStore = create<Store>()(
               routineId: null,
               exercises: [],
             };
+            if (opts.at) w.endedAt = opts.at.endedAt;
+            // 먼저 넣어 두어야 아래에서 기구·이전 기록을 고를 때 날짜 기준이 맞음
+            s.active = w;
             // 체중은 지난번 기록 값을 미리 채워 둠 (운동 화면에서 바로 고칠 수 있음)
-            const lastBw = latestBodyweight(s.workouts);
+            const lastBw = latestBodyweight(history(s));
             if (lastBw) w.bodyweightKg = lastBw;
             const routine = opts.routineId ? s.routines.find((r) => r.id === opts.routineId) : undefined;
             const copy = opts.copyOf ? s.workouts.find((x) => x.id === opts.copyOf) : undefined;
             if (routine) {
               w.name = routine.name;
               w.routineId = routine.id;
-              routine.lastUsedAt = now;
+              routine.lastUsedAt = Date.now();
               for (const item of routine.items) {
                 const e = makeEntry(s, item.exerciseId, gymId, item.variantId, item.grip);
                 e.restSec = item.restSec;
@@ -264,7 +273,16 @@ export const useStore = create<Store>()(
                 w.exercises.push(e);
               }
             }
-            s.active = w;
+          }),
+        setActiveTime: (startedAt, endedAt) =>
+          set((s) => {
+            const a = s.active;
+            if (!a) return;
+            // 이름을 손대지 않았다면 바뀐 시간에 맞는 이름으로 (아침/오후/저녁 운동)
+            if (a.name === defaultWorkoutName(a.startedAt)) a.name = defaultWorkoutName(startedAt);
+            a.startedAt = startedAt;
+            if (endedAt == null) delete a.endedAt;
+            else a.endedAt = endedAt;
           }),
         setActiveGym: (gymId) =>
           set((s) => {
@@ -390,7 +408,7 @@ export const useStore = create<Store>()(
               // 빈 칸이면 이전 기록(같은 기구) 값으로 채웁니다.
               // (화면의 회색 힌트와 같은 순서: 지난번 같은 세트 → 바로 위 세트 → 지난번 마지막 세트)
               const idx = e.sets.indexOf(st);
-              const prevSets = findPrevious(s.workouts, e.exerciseId, e.variantId, e.grip)?.entry.sets.filter((x) => x.done) ?? [];
+              const prevSets = findPrevious(history(s), e.exerciseId, e.variantId, e.grip)?.entry.sets.filter((x) => x.done) ?? [];
               const prev = prevSets[idx];
               const last = prevSets[prevSets.length - 1];
               const above = e.sets[idx - 1];
@@ -410,7 +428,8 @@ export const useStore = create<Store>()(
             .map((e) => ({ ...e, sets: e.sets.filter((x) => x.done) }))
             .filter((e) => e.sets.length > 0);
           if (exercises.length === 0) return null;
-          const done: Workout = { ...a, exercises, endedAt: Date.now() };
+          // 지난 날짜로 기록한 운동은 정해 둔 끝 시각, 아니면 지금
+          const done: Workout = { ...a, exercises, endedAt: a.endedAt ?? Date.now() };
           set((s) => {
             s.workouts = sortWorkouts([done, ...s.workouts]);
             s.active = null;
