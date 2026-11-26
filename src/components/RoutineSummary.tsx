@@ -52,7 +52,7 @@ export function RoutineSummary({ r }: { r: Routine }) {
           <div className="tiny faint">
             {p.actual
               ? `이 루틴으로 한 최근 ${p.actual.count}번 평균 ${fmtMinutes(p.actual.minutes)}`
-              : '세트당 40초 + 정해 둔 휴식 + 운동 사이 준비 1분 30초로 계산'}
+              : '세트당 40초 + 정해 둔 휴식 + 운동 사이 준비 3분(워밍업 포함)으로 계산'}
           </div>
         </div>
         <button className="btn ghost sm" onClick={() => setShowMap((x) => !x)}>

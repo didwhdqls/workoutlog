@@ -4,12 +4,13 @@ import { exerciseLoad } from './fatigue';
 
 /**
  * 루틴 미리 보기: 예상 운동 시간과 자극 부위.
- * 시간 = 세트 수행(무게·횟수 세트 40초, 시간 세트는 정해 둔 시간) + 세트 사이 휴식 + 운동 사이 준비(90초).
+ * 시간 = 세트 수행(무게·횟수 세트 40초, 시간 세트는 정해 둔 시간) + 세트 사이 휴식 + 운동 사이 준비(3분: 기구 이동·세팅·워밍업 세트).
  * 이 루틴을 실제로 해 본 기록이 있으면 그 평균 시간도 함께 보여 줍니다.
  */
 const WORK_SEC = 40;
 const TIME_SET_DEFAULT = 60;
-const SWITCH_SEC = 90;
+/** 운동 사이 준비 시간: 기구 이동·세팅·워밍업 세트 */
+const SWITCH_SEC = 180;
 
 export interface RoutinePlan {
   sets: number;
