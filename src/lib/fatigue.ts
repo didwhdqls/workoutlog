@@ -34,6 +34,7 @@ export const RECOVERY_HOURS: Record<SubMuscle, number> = {
 /** 다관절 운동의 보조 부위 (세트당 0.5) */
 export const SECONDARY: Record<string, SubMuscle[]> = {
   'seated-row': ['lats', 'biceps', 'rear-delt'],
+  'one-arm-seated-row': ['lats', 'biceps', 'rear-delt'],
   'long-pull': ['lats', 'biceps', 'rear-delt'],
   'lat-pulldown': ['biceps', 'mid-back'],
   'one-arm-lat-pulldown': ['biceps', 'mid-back'],

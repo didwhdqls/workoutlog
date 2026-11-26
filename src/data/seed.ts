@@ -147,6 +147,21 @@ const SPEC: ExSpec[] = [
       m('precor', 'stack'),
     ],
   },
+  // v14: 한 팔씩 당기는 시티드 로우 (케이블 싱글 핸들, 양팔이 따로 움직이는 플레이트 머신). 한쪽 무게 기준, 볼륨 ×2
+  {
+    id: 'one-arm-seated-row',
+    name: '원암 시티드 로우',
+    muscle: 'back',
+    v: [
+      e('cable'),
+      m('hammer', 'plate', 'ISO-래터럴 로우'),
+      m('panatta', 'plate'),
+      m('prime', 'plate'),
+      ...many('plate', ['watson', 'gymleco']),
+      g('plate'),
+      g('stack'),
+    ],
+  },
   // v9: 앉아서 발판에 발을 대고 케이블을 몸쪽으로 당기는 롱 풀 스테이션 (시티드 케이블 로우)
   {
     id: 'long-pull',
@@ -529,8 +544,9 @@ const SPEC: ExSpec[] = [
  * v11: 프리처 컬에 케이블 추가
  * v12: 벤치 프레스·인클라인 벤치 프레스에 머신 추가
  * v13: 원암 하이 로우 추가
+ * v14: 원암 시티드 로우 추가
  */
-export const SEED_VERSION = 13;
+export const SEED_VERSION = 14;
 
 /** v4에서 숨긴 T바 로우 브랜드 머신 (기록이 없을 때만 숨김) */
 export const SEED_V4_HIDDEN = ['t-bar-row:m-hammer-plate', 't-bar-row:m-prime-plate', 't-bar-row:m-atlantis-plate'];
