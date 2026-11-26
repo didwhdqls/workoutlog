@@ -17,7 +17,8 @@ export function RoutineLine({ r }: { r: Routine }) {
   if (!p.sets) return null;
   return (
     <span className="tnum">
-      <Icon name="timer" size={12} /> 약 {fmtMinutes(p.actual?.minutes ?? p.minutes)} · {p.sets}세트
+      <Icon name="timer" size={12} /> 예상 {fmtMinutes(p.minutes)}
+      {p.actual && ` (실제 평균 ${fmtMinutes(p.actual.minutes)})`} · {p.sets}세트
       {p.groups.length > 0 && ' · ' + p.groups.slice(0, 3).map(([g, n]) => `${MUSCLE_LABEL[g]} ${n}`).join(' · ')}
     </span>
   );
@@ -41,18 +42,27 @@ export function RoutineSummary({ r }: { r: Routine }) {
     <div className="card" style={{ marginBottom: 14 }}>
       <div className="row" style={{ alignItems: 'baseline', gap: 8 }}>
         <div className="grow">
-          <div className="tiny muted">예상 시간</div>
-          <div style={{ fontSize: 20, fontWeight: 800 }} className="tnum">
-            약 {fmtMinutes(p.minutes)}
-            <span className="small muted" style={{ fontWeight: 500 }}>
-              {' '}
-              · {r.items.length}개 운동 · {p.sets}세트
-            </span>
+          <div className="row" style={{ gap: 18, alignItems: 'flex-end' }}>
+            <div>
+              <div className="tiny muted">예상 시간</div>
+              <div style={{ fontSize: 20, fontWeight: 800 }} className="tnum">
+                약 {fmtMinutes(p.minutes)}
+              </div>
+            </div>
+            <div>
+              <div className="tiny muted">실제 평균</div>
+              <div style={{ fontSize: 20, fontWeight: 800, color: p.actual ? undefined : 'var(--text-3)' }} className="tnum">
+                {p.actual ? fmtMinutes(p.actual.minutes) : '–'}
+              </div>
+            </div>
+          </div>
+          <div className="small muted" style={{ marginTop: 2 }}>
+            {r.items.length}개 운동 · {p.sets}세트
           </div>
           <div className="tiny faint">
-            {p.actual
-              ? `이 루틴으로 한 최근 ${p.actual.count}번 평균 ${fmtMinutes(p.actual.minutes)}`
-              : '세트당 40초 + 정해 둔 휴식 + 운동 사이 준비 3분(워밍업 포함)으로 계산'}
+            예상: 세트당 40초 + 정해 둔 휴식 + 운동 사이 준비 3분(워밍업 포함)
+            <br />
+            {p.actual ? `실제: 이 루틴으로 한 최근 ${p.actual.count}번의 평균` : '실제: 이 루틴으로 운동하면 기록된 시간의 평균이 나와요'}
           </div>
         </div>
         <button className="btn ghost sm" onClick={() => setShowMap((x) => !x)}>
