@@ -4,6 +4,10 @@
   --surface-2: #20242d;
   --surface-3: #2a2f3a;
   --line: #2c313c;
+  /* 근육 피로도 몸 모형 */
+  --body-base: #262a33;
+  --body-muscle: #3a404d;
+  --body-line: #14171d;
   --text: #eef0f4;
   --text-2: #a3a9b6;
   --text-3: #6d7482;
@@ -30,6 +34,9 @@
     --surface-2: #f0f2f6;
     --surface-3: #e4e7ee;
     --line: #e2e5eb;
+    --body-base: #e6e8ee;
+    --body-muscle: #cdd2dc;
+    --body-line: #ffffff;
     --text: #14171d;
     --text-2: #5b6271;
     --text-3: #9198a6;

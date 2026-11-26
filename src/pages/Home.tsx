@@ -11,6 +11,8 @@ import { useMaps, useStore } from '../store';
 import { MUSCLE_LABEL } from '../types';
 import { ActiveTime } from './ActiveWorkout';
 import { WhenSheet } from '../components/WhenSheet';
+import { BodyMap, FatigueList } from '../components/BodyMap';
+import { fatigueAt } from '../lib/fatigue';
 import { WorkoutCard } from './History';
 
 export function Home() {
@@ -34,6 +36,11 @@ export function Home() {
   const routineMap = useMemo(() => new Map(routines.map((r) => [r.id, r])), [routines]);
   const todayKey = dayKey(Date.now());
   const activeKey = active ? dayKey(active.startedAt) : null;
+
+  // 지금 부위별 회복 상태 (1분마다 다시 계산할 필요는 없어 화면을 열 때 기준)
+  const fatigue = useMemo(() => fatigueAt(workouts, maps.ex), [workouts, maps.ex]);
+  const anyFatigue = [...fatigue.values()].some((f) => f.level > 0);
+  const [showFatigueList, setShowFatigueList] = useState(false);
 
   const topMuscles = [...week.muscles.entries()].filter(([, b]) => b.sets > 0).sort((a, b) => b[1].sets - a[1].sets);
 
@@ -163,6 +170,28 @@ export function Home() {
             </span>
           ))}
         </Link>
+      )}
+
+      {workouts.length > 0 && (
+        <>
+          <div className="section-title">
+            근육 회복 상태
+            {anyFatigue && (
+              <button className="btn ghost sm" onClick={() => setShowFatigueList((x) => !x)}>
+                {showFatigueList ? '접기' : '부위별 보기'}
+              </button>
+            )}
+          </div>
+          <div className="card">
+            <BodyMap fatigue={fatigue} />
+            {!anyFatigue && (
+              <div className="small muted" style={{ textAlign: 'center', marginTop: 8 }}>
+                모든 부위가 회복된 상태예요.
+              </div>
+            )}
+            {anyFatigue && showFatigueList && <FatigueList fatigue={fatigue} />}
+          </div>
+        </>
       )}
 
       <div className="section-title">

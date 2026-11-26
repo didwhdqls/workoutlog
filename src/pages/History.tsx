@@ -4,6 +4,8 @@ import { ask, askText } from '../components/Dialog';
 import { Icon } from '../components/Icon';
 import { ReviewCard, reviewSummary } from '../components/ReviewCard';
 import { WhenSheet } from '../components/WhenSheet';
+import { BodyMap } from '../components/BodyMap';
+import { fatigueAt } from '../lib/fatigue';
 import { findPRs, fmtVolume, latestBodyweight, workoutSetCount, workoutVolumeKg } from '../lib/stats';
 import { dayKey, dayLabel, parseDayKey, workoutsByDay } from '../lib/calendar';
 import { fmtDate, fmtDurationLong, fmtSet, fmtTime, variantName } from '../lib/util';
@@ -217,6 +219,8 @@ export function WorkoutDetail() {
   const w = workouts.find((x) => x.id === id);
 
   const prs = useMemo(() => (w ? findPRs(w, workouts, maps.tracks) : new Map<string, string[]>()), [w, workouts, maps.tracks]);
+  // 이 운동을 마친 직후의 부위별 피로도 (그 전 사흘 안의 운동도 남은 만큼 반영)
+  const fatigue = useMemo(() => (w ? fatigueAt(workouts, maps.ex, w.endedAt ?? w.startedAt) : null), [w, workouts, maps.ex]);
   if (!w) return <div className="empty">기록을 찾을 수 없어요.</div>;
 
   const volume = workoutVolumeKg(w, maps.v, maps.ex, bw);
@@ -271,6 +275,16 @@ export function WorkoutDetail() {
           </div>
         </div>
       </div>
+
+      {fatigue && [...fatigue.values()].some((f) => f.level > 0) && (
+        <div className="card" style={{ marginTop: 14 }}>
+          <div style={{ fontWeight: 700, marginBottom: 2 }}>운동 직후 근육 피로도</div>
+          <div className="tiny faint" style={{ marginBottom: 10 }}>
+            이번 운동과 그 전 사흘 동안 한 운동을 합쳐 어림한 값이에요.
+          </div>
+          <BodyMap fatigue={fatigue} />
+        </div>
+      )}
 
       <div style={{ marginTop: 14 }}>
         {w.exercises.map((e) => {
