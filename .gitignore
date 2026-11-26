@@ -5,3 +5,6 @@ dist
 .claude/
 .DS_Store
 Thumbs.db
+
+# 안드로이드 서명 키 (절대 커밋하지 말 것)
+android-signing/

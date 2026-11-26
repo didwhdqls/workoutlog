@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useStore } from '../store';
 import { beep, buzz, cancelChime, scheduleChime } from '../lib/sound';
+import { syncRestNotification } from '../lib/native';
 import { fmtDuration } from '../lib/util';
 
 /** 화면 하단에 떠 있는 휴식 타이머. 종료 시각(endAt)을 저장하므로 화면을 꺼도 시간이 맞습니다. */
@@ -19,6 +20,11 @@ export function RestTimer({ overTab }: { overTab: boolean }) {
     if (endAtKey != null && settings.sound) scheduleChime(endAtKey);
     else cancelChime();
   }, [endAtKey, settings.sound]);
+  // 안드로이드 앱: 화면이 꺼지거나 다른 앱으로 가면 휴식 끝에 폰 알림
+  const restLabel = rest?.label ?? '';
+  useEffect(() => {
+    syncRestNotification(endAtKey != null ? { endAt: endAtKey, label: restLabel } : null);
+  }, [endAtKey, restLabel]);
 
   useEffect(() => {
     if (!rest) return;

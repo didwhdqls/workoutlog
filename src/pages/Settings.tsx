@@ -4,6 +4,7 @@ import { ask, askText, notify } from '../components/Dialog';
 import { Icon } from '../components/Icon';
 import { RestPicker } from '../components/RestPicker';
 import { previewChime } from '../lib/sound';
+import { saveBackupNative } from '../lib/native';
 import { fmtRest } from '../lib/util';
 import { exportData, useStore, type DataState } from '../store';
 
@@ -52,13 +53,21 @@ export function Settings() {
   const [restMenu, setRestMenu] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const doExport = () => {
+  const doExport = async () => {
+    const d = new Date();
+    const name = `workoutlog-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}.json`;
+    // 안드로이드 앱: 공유 창으로 (드라이브·카톡·파일 앱 등에 저장)
+    try {
+      if (await saveBackupNative(name, exportData())) return;
+    } catch {
+      await notify('백업을 만들지 못했어요', '다시 시도해 주세요.');
+      return;
+    }
     const blob = new Blob([exportData()], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    const d = new Date();
     a.href = url;
-    a.download = `workoutlog-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}.json`;
+    a.download = name;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   };

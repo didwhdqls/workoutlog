@@ -1,0 +1,69 @@
+# 안드로이드 앱(APK) 빌드 → GitHub Releases 'android-latest'에 올림
+# 폰에서 https://github.com/didwhdqls/workoutlog/releases/tag/android-latest 열어 APK를 받아 설치
+name: Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: 서명 키 확인
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ]; then
+            echo "::error::GitHub Secrets에 ANDROID_KEYSTORE_BASE64 / ANDROID_KEYSTORE_PASSWORD 를 먼저 추가해 주세요."
+            exit 1
+          fi
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.p12"
+
+      - name: 웹 화면 빌드
+        run: |
+          npm ci
+          npm run build
+          npx cap sync android
+
+      - name: APK 빌드 (서명)
+        working-directory: android
+        env:
+          KEYSTORE_PATH: ${{ runner.temp }}/release.p12
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          VERSION_CODE: ${{ github.run_number }}
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+          cp app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/workoutlog.apk"
+
+      - name: Releases에 올리기
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete android-latest --cleanup-tag -y || true
+          gh release create android-latest "$RUNNER_TEMP/workoutlog.apk" \
+            --title "운동기록 안드로이드 앱 (빌드 ${{ github.run_number }})" \
+            --notes "폰에서 workoutlog.apk 를 눌러 받은 뒤 설치하세요. 커밋: ${GITHUB_SHA::7}" \
+            --target "$GITHUB_SHA" \
+            --latest=false
