@@ -123,6 +123,37 @@ export function VariantPicker({
 
   const gymName = gymId ? gyms.find((g) => g.id === gymId)?.name : null;
 
+  // 케이블·스미스 기구가 있는 운동: 브랜드를 탭 한 번으로 고르는 칩.
+  // 이 헬스장에서 다른 운동에 쓴 브랜드 케이블(=같은 케이블 스테이션)이 맨 앞에 옴
+  const [brandsOpen, setBrandsOpen] = useState<Record<string, boolean>>({});
+  const brandRows = useMemo(() => {
+    const own = allVariants.filter((v) => v.exerciseId === exerciseId);
+    const vmap = new Map(allVariants.map((v) => [v.id, v]));
+    return (['cable', 'smith'] as const)
+      .filter((eq) => own.some((v) => v.equipment === eq))
+      .map((eq) => {
+        const atGym = new Set<string>();
+        const used = new Set<string>();
+        for (const w of workouts)
+          for (const e of w.exercises) {
+            const v = e.variantId ? vmap.get(e.variantId) : undefined;
+            if (v?.equipment !== eq || !v.brand) continue;
+            used.add(v.brand);
+            if (gymId && w.gymId === gymId) atGym.add(v.brand);
+          }
+        const taken = new Set(own.filter((v) => v.equipment === eq && v.brand && !v.archived).map((v) => v.brand!));
+        const order = [...atGym, ...used, ...Object.values(BRANDS)].filter((b, i, a) => a.indexOf(b) === i && !taken.has(b));
+        return { eq, brands: order.map((b) => ({ brand: b, atGym: atGym.has(b) })) };
+      });
+  }, [allVariants, workouts, exerciseId, gymId]);
+  const pickBrand = (eq: 'cable' | 'smith', brand: string) => {
+    const archived = allVariants.find((v) => v.exerciseId === exerciseId && v.equipment === eq && v.brand === brand);
+    if (archived) {
+      updateVariant(archived.id, { archived: false });
+      pick(archived.id);
+    } else pick(addVariant({ exerciseId, equipment: eq, brand, unit: 'kg', gymId: null }));
+  };
+
   const pick = (id: string | null) => {
     onPick(id);
     onClose();
@@ -228,6 +259,36 @@ export function VariantPicker({
           </div>
         )}
       </div>
+
+      {!q &&
+        brandRows.map(({ eq, brands }) => {
+          const open = brandsOpen[eq];
+          const shown = open ? brands : brands.slice(0, 9);
+          return (
+            <div key={eq}>
+              <div className="section-title" style={{ marginTop: 14 }}>
+                {EQUIPMENT_LABEL[eq]} 브랜드 고르기
+              </div>
+              <p className="tiny faint" style={{ margin: '-4px 2px 8px' }}>
+                {eq === 'cable' ? '케이블 스테이션도 브랜드마다 도르래·무게감이 달라요.' : '스미스 머신도 브랜드마다 바 무게·마찰이 달라요.'} 탭하면 그
+                브랜드 {EQUIPMENT_LABEL[eq]}로 따로 기록돼요.
+              </p>
+              <div className="chips wrap">
+                {shown.map(({ brand, atGym }) => (
+                  <button key={brand} className="chip" onClick={() => pickBrand(eq, brand)}>
+                    {brand}
+                    {atGym && <span className="tag ok" style={{ marginLeft: 4 }}>이 헬스장</span>}
+                  </button>
+                ))}
+                {!open && brands.length > shown.length && (
+                  <button className="chip" style={{ color: 'var(--accent)' }} onClick={() => setBrandsOpen((o) => ({ ...o, [eq]: true }))}>
+                    +{brands.length - shown.length} 더보기
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
 
       {quickAdds.length > 0 && (
         <>
