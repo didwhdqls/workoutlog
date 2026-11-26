@@ -3,6 +3,7 @@ import { HashRouter, NavLink, Route, Routes, useLocation, useNavigate } from 're
 import { DialogHost } from './components/Dialog';
 import { Icon, type IconName } from './components/Icon';
 import { RestTimer } from './components/RestTimer';
+import { unlockAudio } from './lib/sound';
 import { ActiveTime, ActiveWorkout } from './pages/ActiveWorkout';
 import { ExerciseDetail, Library, VariantDetail } from './pages/Exercises';
 import { History, WorkoutDetail } from './pages/History';
@@ -31,6 +32,12 @@ function Shell() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
+
+  // 앱 어디든 탭하면 알림음 오디오를 깨워 둠 (폰이 잠시 쉬게 한 오디오도 다시 살림)
+  useEffect(() => {
+    document.addEventListener('pointerdown', unlockAudio, { passive: true });
+    return () => document.removeEventListener('pointerdown', unlockAudio);
+  }, []);
 
   return (
     <div className={'app' + (showLiveBar ? ' has-bar' : '')}>

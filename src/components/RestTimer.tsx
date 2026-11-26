@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useStore } from '../store';
-import { beep, buzz } from '../lib/sound';
+import { beep, buzz, cancelChime, scheduleChime } from '../lib/sound';
 import { fmtDuration } from '../lib/util';
 
 /** 화면 하단에 떠 있는 휴식 타이머. 종료 시각(endAt)을 저장하므로 화면을 꺼도 시간이 맞습니다. */
@@ -12,6 +12,13 @@ export function RestTimer({ overTab }: { overTab: boolean }) {
   const [now, setNow] = useState(Date.now());
   const [finishedFor, setFinishedFor] = useState<number | null>(null);
   const firedFor = useRef<number | null>(null);
+
+  // 끝나는 시각에 알림음 미리 예약 (+15초 등으로 바뀌면 다시 예약, 휴식을 끄면 취소)
+  const endAtKey = rest?.endAt ?? null;
+  useEffect(() => {
+    if (endAtKey != null && settings.sound) scheduleChime(endAtKey);
+    else cancelChime();
+  }, [endAtKey, settings.sound]);
 
   useEffect(() => {
     if (!rest) return;
@@ -28,7 +35,7 @@ export function RestTimer({ overTab }: { overTab: boolean }) {
     firedFor.current = endAt;
     const stale = -remaining > 5000; // 앱을 다시 열었을 때 이미 한참 지났다면 조용히 정리
     if (!stale) {
-      if (settings.sound) beep();
+      if (settings.sound) beep(endAt);
       if (settings.vibrate) buzz();
       setFinishedFor(endAt);
     }

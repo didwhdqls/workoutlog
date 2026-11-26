@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ask, askText, notify } from '../components/Dialog';
 import { Icon } from '../components/Icon';
 import { RestPicker } from '../components/RestPicker';
+import { previewChime } from '../lib/sound';
 import { fmtRest } from '../lib/util';
 import { exportData, useStore, type DataState } from '../store';
 
@@ -102,6 +103,13 @@ export function Settings() {
           <Icon name="swap" size={16} />
         </button>
         <Toggle label="휴식 종료 알림음" on={settings.sound} onChange={(v) => update({ sound: v })} />
+        <button className="list-item" onClick={() => previewChime()}>
+          <span className="grow">
+            알림음 미리 듣기
+            <div className="tiny faint">짧은 두 음이에요. 이어폰을 끼고 있으면 이어폰으로 나와요.</div>
+          </span>
+          <Icon name="play" size={16} />
+        </button>
         <Toggle label="휴식 종료 진동 (안드로이드)" on={settings.vibrate} onChange={(v) => update({ vibrate: v })} />
       </div>
 
