@@ -56,6 +56,7 @@ export const SUBS_BY_GROUP: Record<MuscleGroup, SubMuscle[]> = {
 /** 기본 운동의 주 타깃 부위 (정적 데이터라 기존 사용자에게도 바로 적용) */
 const SEED_SUB: Record<string, SubMuscle> = {
   'seated-row': 'mid-back',
+  'long-pull': 'mid-back',
   'lat-pulldown': 'lats',
   'one-arm-lat-pulldown': 'lats',
   'high-row': 'lats',

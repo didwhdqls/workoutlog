@@ -99,6 +99,8 @@ const e = (equipment: Equipment, model?: string, suffix = ''): VSpec => ({
   equipment,
   model,
 });
+/** 브랜드 케이블 기구 (예: 롱 풀 스테이션) */
+const cb = (brand: BrandKey, model?: string): VSpec => ({ key: `cable-${brand}`, equipment: 'cable', brand: BRANDS[brand], model });
 /** 여러 브랜드를 같은 방식으로 */
 const many = (loading: Loading, brands: BrandKey[]) => brands.map((b) => m(b, loading));
 /** T바 로우 일반 플레이트 머신의 모델명 (SPEC보다 먼저 선언해야 함) */
@@ -143,6 +145,16 @@ const SPEC: ExSpec[] = [
       m('gymleco', 'plate'),
       m('hoist', 'stack'),
       m('precor', 'stack'),
+    ],
+  },
+  // v9: 앉아서 발판에 발을 대고 케이블을 몸쪽으로 당기는 롱 풀 스테이션 (시티드 케이블 로우)
+  {
+    id: 'long-pull',
+    name: '롱 풀',
+    muscle: 'back',
+    v: [
+      e('cable'),
+      ...(['lf', 'tg', 'matrix', 'precor', 'cybex', 'hoist', 'atlantis', 'prime'] as BrandKey[]).map((b) => cb(b)),
     ],
   },
   {
@@ -455,8 +467,9 @@ const SPEC: ExSpec[] = [
  * v6: 원암 레터럴 레이즈 추가
  * v7: 어시스트 딥스 추가
  * v8: 원암 랫 풀다운 추가
+ * v9: 롱 풀 추가
  */
-export const SEED_VERSION = 8;
+export const SEED_VERSION = 9;
 
 /** v4에서 숨긴 T바 로우 브랜드 머신 (기록이 없을 때만 숨김) */
 export const SEED_V4_HIDDEN = ['t-bar-row:m-hammer-plate', 't-bar-row:m-prime-plate', 't-bar-row:m-atlantis-plate'];
