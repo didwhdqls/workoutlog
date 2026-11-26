@@ -4,7 +4,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { mergeSeed } from './data/mergeSeed';
 import { buildSeed, SEED_VERSION } from './data/seed';
-import { findPrevious, lastGrip, latestBodyweight, pickVariant } from './lib/stats';
+import { convertWeight, findPrevious, lastGrip, latestBodyweight, pickVariant } from './lib/stats';
 import { defaultWorkoutName, newSet, uid } from './lib/util';
 import type {
   Exercise,
@@ -181,9 +181,7 @@ export const useStore = create<Store>()(
             const from = v.unit ?? 'kg';
             v.unit = unit;
             if (!convert || from === unit || from === 'level' || unit === 'level') return;
-            const LB = 0.45359237;
-            const f = from === 'kg' ? 1 / LB : LB; // kg→lb ×2.2046, lb→kg ×0.4536
-            const conv = (w: number | null) => (w == null ? w : Math.round(w * f * 10) / 10);
+            const conv = (w: number | null) => convertWeight(w, from, unit);
             for (const w of s.workouts) for (const e of w.exercises) if (e.variantId === id) for (const st of e.sets) st.weight = conv(st.weight);
             for (const r of s.routines) for (const it of r.items) if (it.variantId === id) for (const p of it.sets) p.weight = conv(p.weight);
           }),

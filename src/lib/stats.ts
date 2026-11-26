@@ -6,6 +6,13 @@ const sameGrip = (a?: Grip | null, b?: Grip | null) => (a ?? null) === (b ?? nul
 
 const LB = 0.45359237;
 
+/** 무게를 다른 단위로 (kg ↔ lb, 소수 1자리). 칸이 섞이면 그대로 */
+export function convertWeight(w: number | null, from: WeightUnit, to: WeightUnit): number | null {
+  if (w == null || from === to || from === 'level' || to === 'level') return w;
+  const f = from === 'kg' ? 1 / LB : LB;
+  return Math.round(w * f * 10) / 10;
+}
+
 export function toKg(w: number, unit: WeightUnit): number | null {
   if (unit === 'kg') return w;
   if (unit === 'lb') return w * LB;

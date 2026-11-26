@@ -8,11 +8,12 @@ import { NumInput, TimeInput } from '../components/NumInput';
 import { ReorderSheet } from '../components/ReorderSheet';
 import { ActionSheet } from '../components/Sheet';
 import { VariantPicker } from '../components/VariantPicker';
+import { UnitSwitch, convertSets } from '../components/UnitSwitch';
 import { fromInputs, toDateInput, toTimeInput } from '../components/WhenSheet';
 import { defaultVariantId, isPerSide, latestBodyweight, loadMode } from '../lib/stats';
-import { newSet, uid, unitLabel, variantName } from '../lib/util';
+import { newSet, uid, variantName } from '../lib/util';
 import { useMaps, useStore } from '../store';
-import type { SetEntry, SetKind, Workout, WorkoutExercise } from '../types';
+import type { SetEntry, SetKind, WeightUnit, Workout, WorkoutExercise } from '../types';
 
 const KIND_LABEL: Record<SetKind, string> = { normal: '일반 세트', warmup: '워밍업', drop: '드롭 세트', failure: '실패 지점까지' };
 const KIND_SHORT: Record<SetKind, string> = { normal: '', warmup: 'W', drop: 'D', failure: 'F' };
@@ -149,6 +150,13 @@ function Editor({ original }: { original: Workout }) {
             entry={e}
             gymId={draft.gymId}
             onChange={(fn) => updateEntry(e.id, fn)}
+            onUnitConverted={(vid, from, to) =>
+              // 스토어의 기록은 이미 환산됨. 고치던 초안도 같은 기구 항목은 똑같이 환산
+              setDraft((w) => ({
+                ...w,
+                exercises: w.exercises.map((x) => (x.variantId === vid ? { ...x, sets: convertSets(x.sets, from, to) } : x)),
+              }))
+            }
             onRemove={() => update((w) => ({ ...w, exercises: w.exercises.filter((x) => x.id !== e.id) }))}
           />
         ))}
@@ -205,11 +213,13 @@ function EditCard({
   entry,
   gymId,
   onChange,
+  onUnitConverted,
   onRemove,
 }: {
   entry: WorkoutExercise;
   gymId: string | null;
   onChange: (fn: (e: WorkoutExercise) => WorkoutExercise) => void;
+  onUnitConverted: (variantId: string, from: WeightUnit, to: WeightUnit) => void;
   onRemove: () => void;
 }) {
   const maps = useMaps();
@@ -217,7 +227,6 @@ function EditCard({
   const exercise = maps.ex.get(entry.exerciseId);
   const variant = entry.variantId ? maps.v.get(entry.variantId) : undefined;
   const track = exercise?.track ?? 'weight';
-  const unit = variant?.unit ?? 'kg';
   const perSide = isPerSide(exercise ?? entry.exerciseId, variant) && loadMode(entry, exercise, variant) === 'external';
   const assisted = loadMode(entry, exercise, variant) === 'assisted';
   const [menu, setMenu] = useState(false);
@@ -266,7 +275,11 @@ function EditCard({
         <thead>
           <tr>
             <th style={{ width: 40 }}>세트</th>
-            {track === 'weight' && <th>{assisted ? '보조 ' : perSide ? '한쪽 ' : ''}{unitLabel(unit)}</th>}
+            {track === 'weight' && (
+              <th>
+                <UnitSwitch variant={variant} prefix={assisted ? '보조 ' : perSide ? '한쪽 ' : ''} onConverted={onUnitConverted} />
+              </th>
+            )}
             {track !== 'time' && <th>회</th>}
             {track === 'time' && <th>시간</th>}
             <th style={{ width: 42 }} />
