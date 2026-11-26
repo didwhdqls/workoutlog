@@ -73,6 +73,7 @@ export const SECONDARY: Record<string, SubMuscle[]> = {
   'hack-squat': ['glutes', 'adductors'],
   'pendulum-squat': ['glutes', 'adductors'],
   'romanian-deadlift': ['glutes', 'lower-back'],
+  'stiff-leg-deadlift': ['glutes', 'lower-back'],
   lunge: ['glutes', 'adductors'],
   'bulgarian-split-squat': ['glutes', 'adductors'],
   'hip-thrust': ['hamstrings'],

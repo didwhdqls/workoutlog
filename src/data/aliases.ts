@@ -66,6 +66,7 @@ export const EXERCISE_ALIASES: Record<string, string[]> = {
   'lying-leg-curl': ['Lying Leg Curl', 'Prone Leg Curl', 'Leg Curl'],
   'seated-leg-curl': ['Seated Leg Curl', 'Leg Curl'],
   'romanian-deadlift': ['Romanian Deadlift', 'RDL', '루마니안'],
+  'stiff-leg-deadlift': ['Stiff Leg Deadlift', 'Stiff-Legged Deadlift', 'SLDL', '스티프 데드리프트', '스티프 데드', '스티프레그', '스티프 레그'],
   lunge: ['Lunge', 'Lunges', 'Walking Lunge', '워킹 런지'],
   'bulgarian-split-squat': ['Bulgarian Split Squat', 'BSS', 'Split Squat', '불스', '스플릿 스쿼트'],
   'hip-thrust': ['Hip Thrust', 'Glute Bridge', '힙쓰', '글루트 브릿지'],

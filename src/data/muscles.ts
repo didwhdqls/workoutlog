@@ -101,6 +101,7 @@ const SEED_SUB: Record<string, SubMuscle> = {
   'lying-leg-curl': 'hamstrings',
   'seated-leg-curl': 'hamstrings',
   'romanian-deadlift': 'hamstrings',
+  'stiff-leg-deadlift': 'hamstrings',
   lunge: 'quads',
   'bulgarian-split-squat': 'quads',
   'hip-thrust': 'glutes',

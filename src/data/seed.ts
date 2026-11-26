@@ -461,6 +461,8 @@ const SPEC: ExSpec[] = [
   { id: 'lying-leg-curl', name: '라잉 레그 컬', muscle: 'legs', v: stackAll(m('hammer', 'plate')) },
   { id: 'seated-leg-curl', name: '시티드 레그 컬', muscle: 'legs', v: stackAll() },
   { id: 'romanian-deadlift', name: '루마니안 데드리프트', muscle: 'legs', v: [e('barbell'), e('dumbbell'), e('smith')] },
+  // v16: 무릎을 거의 편 채 바닥 가까이까지 내리는 데드리프트 (루마니안보다 햄스트링이 더 늘어남)
+  { id: 'stiff-leg-deadlift', name: '스티프 레그 데드리프트', muscle: 'legs', v: [e('barbell'), e('dumbbell'), e('smith')] },
   { id: 'lunge', name: '런지', muscle: 'legs', v: [e('dumbbell'), e('barbell'), e('smith')] },
   { id: 'bulgarian-split-squat', name: '불가리안 스플릿 스쿼트', muscle: 'legs', v: [e('dumbbell'), e('smith')] },
   { id: 'hip-thrust', name: '힙 쓰러스트', muscle: 'legs', v: [e('barbell'), g('plate'), e('smith'), m('bootybuilder', 'plate')] },
@@ -548,8 +550,9 @@ const SPEC: ExSpec[] = [
  * v13: 원암 하이 로우 추가
  * v14: 원암 시티드 로우 추가
  * v15: 리버스 컬 추가
+ * v16: 스티프 레그 데드리프트 추가
  */
-export const SEED_VERSION = 15;
+export const SEED_VERSION = 16;
 
 /** v4에서 숨긴 T바 로우 브랜드 머신 (기록이 없을 때만 숨김) */
 export const SEED_V4_HIDDEN = ['t-bar-row:m-hammer-plate', 't-bar-row:m-prime-plate', 't-bar-row:m-atlantis-plate'];
