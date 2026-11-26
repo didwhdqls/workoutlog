@@ -13,6 +13,7 @@ export const EXERCISE_ALIASES: Record<string, string[]> = {
   'lat-pulldown': ['Lat Pulldown', 'Lat Pull Down', 'Pulldown', '랫풀', '렛풀다운'],
   'one-arm-lat-pulldown': ['One Arm Lat Pulldown', 'Single Arm Lat Pulldown', 'Single Arm Pulldown', 'Unilateral Pulldown', '원암 풀다운', '원암 랫풀', '한팔 풀다운', '싱글 암 풀다운'],
   'high-row': ['High Row'],
+  'one-arm-high-row': ['One Arm High Row', 'Single Arm High Row', 'Unilateral High Row', '원암 하이로우', '한팔 하이 로우', '싱글 암 하이 로우'],
   'low-row': ['Low Row', 'Iso Low Row', 'Lower Row', '로우로우', '로우 로우 머신'],
   't-bar-row': ['T-Bar Row', 'Tbar Row', 'Standing T-Bar Row', '티바 로우', '일반 티바 로우', '스탠딩 티바 로우', 'Landmine Row', '랜드마인 로우'],
   'machine-t-bar-row': [

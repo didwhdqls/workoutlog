@@ -197,6 +197,20 @@ const SPEC: ExSpec[] = [
       ...many('plate', ['prime', 'atlantis', 'watson', 'gymleco']),
     ],
   },
+  // v13: 양팔이 따로 움직이는 하이 로우 머신을 한 팔씩 하는 경우. 한쪽 무게(한쪽에 끼운 원판) 기준, 볼륨 ×2
+  {
+    id: 'one-arm-high-row',
+    name: '원암 하이 로우',
+    muscle: 'back',
+    v: [
+      m('hammer', 'plate', 'ISO-래터럴 하이 로우'),
+      m('panatta', 'plate'),
+      m('arsenal', 'plate'),
+      m('gym80', 'plate'),
+      ...many('plate', ['prime', 'atlantis', 'watson', 'gymleco']),
+      e('cable'),
+    ],
+  },
   // v3
   {
     id: 'low-row',
@@ -514,8 +528,9 @@ const SPEC: ExSpec[] = [
  * v10: 인클라인 덤벨 컬 추가
  * v11: 프리처 컬에 케이블 추가
  * v12: 벤치 프레스·인클라인 벤치 프레스에 머신 추가
+ * v13: 원암 하이 로우 추가
  */
-export const SEED_VERSION = 12;
+export const SEED_VERSION = 13;
 
 /** v4에서 숨긴 T바 로우 브랜드 머신 (기록이 없을 때만 숨김) */
 export const SEED_V4_HIDDEN = ['t-bar-row:m-hammer-plate', 't-bar-row:m-prime-plate', 't-bar-row:m-atlantis-plate'];

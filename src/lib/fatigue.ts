@@ -38,6 +38,7 @@ export const SECONDARY: Record<string, SubMuscle[]> = {
   'lat-pulldown': ['biceps', 'mid-back'],
   'one-arm-lat-pulldown': ['biceps', 'mid-back'],
   'high-row': ['mid-back', 'biceps'],
+  'one-arm-high-row': ['mid-back', 'biceps'],
   'low-row': ['mid-back', 'biceps'],
   't-bar-row': ['lats', 'biceps', 'rear-delt', 'lower-back'],
   'machine-t-bar-row': ['lats', 'biceps', 'rear-delt'],

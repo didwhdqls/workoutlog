@@ -60,6 +60,7 @@ const SEED_SUB: Record<string, SubMuscle> = {
   'lat-pulldown': 'lats',
   'one-arm-lat-pulldown': 'lats',
   'high-row': 'lats',
+  'one-arm-high-row': 'lats',
   'low-row': 'lats',
   't-bar-row': 'mid-back',
   'machine-t-bar-row': 'mid-back',

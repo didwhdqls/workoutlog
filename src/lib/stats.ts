@@ -43,7 +43,7 @@ export function loadMode(entry: WorkoutExercise, ex: Exercise | undefined, varia
 /** 덤벨 1개를 두 손으로 드는 운동: 덤벨이어도 입력 무게가 전체 무게 */
 const SINGLE_DUMBBELL = new Set(['overhead-triceps']);
 /** 한쪽씩 양쪽을 다 하는 운동: 어떤 기구든 입력 무게는 한쪽 무게 */
-const UNILATERAL = new Set(['dumbbell-row', 'one-arm-lateral-raise', 'one-arm-lat-pulldown']);
+const UNILATERAL = new Set(['dumbbell-row', 'one-arm-lateral-raise', 'one-arm-lat-pulldown', 'one-arm-high-row']);
 
 /** 운동 id 또는 운동 자체 (직접 만든 원암 운동은 운동에 표시가 있어서 운동을 넘겨야 함) */
 type ExRef = string | Pick<Exercise, 'id' | 'unilateral'>;
