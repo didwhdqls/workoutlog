@@ -57,6 +57,7 @@ export const SUBS_BY_GROUP: Record<MuscleGroup, SubMuscle[]> = {
 const SEED_SUB: Record<string, SubMuscle> = {
   'seated-row': 'mid-back',
   'lat-pulldown': 'lats',
+  'one-arm-lat-pulldown': 'lats',
   'high-row': 'lats',
   'low-row': 'lats',
   't-bar-row': 'mid-back',

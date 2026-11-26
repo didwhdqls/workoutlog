@@ -35,6 +35,7 @@ export const RECOVERY_HOURS: Record<SubMuscle, number> = {
 const SECONDARY: Record<string, SubMuscle[]> = {
   'seated-row': ['lats', 'biceps', 'rear-delt'],
   'lat-pulldown': ['biceps', 'mid-back'],
+  'one-arm-lat-pulldown': ['biceps', 'mid-back'],
   'high-row': ['mid-back', 'biceps'],
   'low-row': ['mid-back', 'biceps'],
   't-bar-row': ['lats', 'biceps', 'rear-delt', 'lower-back'],

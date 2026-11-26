@@ -166,6 +166,13 @@ const SPEC: ExSpec[] = [
       m('precor', 'stack'),
     ],
   },
+  // v8: 한 팔씩 당기는 풀다운. 케이블 싱글 핸들이 가장 흔하고, 양팔이 따로 움직이는 플레이트 머신으로도 함
+  {
+    id: 'one-arm-lat-pulldown',
+    name: '원암 랫 풀다운',
+    muscle: 'back',
+    v: [e('cable'), m('hammer', 'plate', 'ISO-래터럴 프론트 풀다운'), m('prime', 'plate'), g('stack')],
+  },
   {
     id: 'high-row',
     name: '하이 로우',
@@ -447,8 +454,9 @@ const SPEC: ExSpec[] = [
  * v5: '머신 T바 로우' → '체스트 서포티드 T바 로우'로 이름 변경 (서서 하는 T바 로우와 구분)
  * v6: 원암 레터럴 레이즈 추가
  * v7: 어시스트 딥스 추가
+ * v8: 원암 랫 풀다운 추가
  */
-export const SEED_VERSION = 7;
+export const SEED_VERSION = 8;
 
 /** v4에서 숨긴 T바 로우 브랜드 머신 (기록이 없을 때만 숨김) */
 export const SEED_V4_HIDDEN = ['t-bar-row:m-hammer-plate', 't-bar-row:m-prime-plate', 't-bar-row:m-atlantis-plate'];
