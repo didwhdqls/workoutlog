@@ -1230,10 +1230,12 @@ tr.done .num-in {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  background: none;
-  color: inherit;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--accent);
   font: inherit;
-  padding: 2px 0;
-  text-decoration: underline dotted;
-  text-underline-offset: 3px;
+  font-weight: 600;
+  padding: 1px 7px;
+  white-space: nowrap;
 }
