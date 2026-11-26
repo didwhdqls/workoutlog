@@ -253,8 +253,47 @@ const SPEC: ExSpec[] = [
   { id: 'pullover', name: '풀오버 머신', muscle: 'back', v: [m('nautilus', 'stack'), m('panatta', 'stack'), m('gym80', 'plate')] },
 
   // ── 가슴 ──
-  { id: 'bench-press', name: '벤치 프레스', muscle: 'chest', v: [e('barbell'), e('dumbbell'), e('smith')] },
-  { id: 'incline-bench-press', name: '인클라인 벤치 프레스', muscle: 'chest', v: [e('barbell'), e('dumbbell'), e('smith')] },
+  // v12: 누워서 하는 벤치 프레스 머신 (앉아서 미는 체스트 프레스와 다른 기구)
+  {
+    id: 'bench-press',
+    name: '벤치 프레스',
+    muscle: 'chest',
+    v: [
+      e('barbell'),
+      e('dumbbell'),
+      e('smith'),
+      m('hammer', 'plate', 'ISO-래터럴 벤치 프레스'),
+      m('panatta', 'plate'),
+      m('gym80', 'plate'),
+      m('arsenal', 'plate'),
+      m('atlantis', 'plate'),
+      m('prime', 'plate'),
+      m('tg', 'stack'),
+      m('lf', 'stack'),
+      g('plate'),
+      g('stack'),
+    ],
+  },
+  {
+    id: 'incline-bench-press',
+    name: '인클라인 벤치 프레스',
+    muscle: 'chest',
+    v: [
+      e('barbell'),
+      e('dumbbell'),
+      e('smith'),
+      m('hammer', 'plate', 'ISO-래터럴 인클라인 벤치 프레스'),
+      m('panatta', 'plate'),
+      m('gym80', 'plate'),
+      m('arsenal', 'plate'),
+      m('atlantis', 'plate'),
+      m('prime', 'plate'),
+      m('tg', 'stack'),
+      m('lf', 'stack'),
+      g('plate'),
+      g('stack'),
+    ],
+  },
   {
     id: 'chest-press',
     name: '체스트 프레스',
@@ -474,8 +513,9 @@ const SPEC: ExSpec[] = [
  * v9: 롱 풀 추가
  * v10: 인클라인 덤벨 컬 추가
  * v11: 프리처 컬에 케이블 추가
+ * v12: 벤치 프레스·인클라인 벤치 프레스에 머신 추가
  */
-export const SEED_VERSION = 11;
+export const SEED_VERSION = 12;
 
 /** v4에서 숨긴 T바 로우 브랜드 머신 (기록이 없을 때만 숨김) */
 export const SEED_V4_HIDDEN = ['t-bar-row:m-hammer-plate', 't-bar-row:m-prime-plate', 't-bar-row:m-atlantis-plate'];
