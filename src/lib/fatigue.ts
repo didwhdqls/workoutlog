@@ -1,4 +1,4 @@
-import { SUBS_BY_GROUP, subMuscleOf, type SubMuscle } from '../data/muscles';
+import { SUBS_BY_GROUP, isSub, subMuscleOf, type SubMuscle } from '../data/muscles';
 import type { Exercise, Workout } from '../types';
 import { isWorkSet } from './stats';
 
@@ -32,7 +32,7 @@ export const RECOVERY_HOURS: Record<SubMuscle, number> = {
 };
 
 /** 다관절 운동의 보조 부위 (세트당 0.5) */
-const SECONDARY: Record<string, SubMuscle[]> = {
+export const SECONDARY: Record<string, SubMuscle[]> = {
   'seated-row': ['lats', 'biceps', 'rear-delt'],
   'long-pull': ['lats', 'biceps', 'rear-delt'],
   'lat-pulldown': ['biceps', 'mid-back'],
@@ -80,6 +80,11 @@ const SECONDARY: Record<string, SubMuscle[]> = {
   'preacher-curl': ['forearms'],
 };
 
+/** 보조 부위: 사용자가 정한 값 → 기본 운동의 내장 값 */
+export function secondaryOf(x: Exercise): SubMuscle[] {
+  return x.secondary ? x.secondary.filter(isSub) : (SECONDARY[x.id] ?? []);
+}
+
 /** 운동 하나가 세트당 각 부위에 주는 피로 비중 */
 export function exerciseLoad(x: Exercise | undefined): Map<SubMuscle, number> {
   const out = new Map<SubMuscle, number>();
@@ -87,7 +92,7 @@ export function exerciseLoad(x: Exercise | undefined): Map<SubMuscle, number> {
   const main = subMuscleOf(x);
   if (main) out.set(main, 1);
   else for (const s of SUBS_BY_GROUP[x.muscle]) out.set(s, 0.5); // 세부 부위를 모르면 그 그룹 전체에 조금씩
-  for (const s of SECONDARY[x.id] ?? []) if (!out.has(s)) out.set(s, 0.5);
+  for (const s of secondaryOf(x)) if (!out.has(s)) out.set(s, 0.5);
   return out;
 }
 

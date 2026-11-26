@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { EXERCISE_ALIASES } from '../data/aliases';
-import { SUB_LABEL, SUBS_BY_GROUP, subMuscleOf, type SubMuscle } from '../data/muscles';
+import { SUB_LABEL, SUBS_BY_GROUP, groupOfSub, subMuscleOf, type SubMuscle } from '../data/muscles';
+import { BodyMap, LEVEL_COLOR } from './BodyMap';
+import { SECONDARY, secondaryOf, type MuscleFatigue } from '../lib/fatigue';
 import { buildSearchIndex, searchExercises } from '../lib/search';
 import { useStore } from '../store';
 import type { Equipment, Exercise, MuscleGroup, TrackType } from '../types';
@@ -194,8 +196,36 @@ export function ExerciseForm({
   const [track, setTrack] = useState<TrackType>(exercise?.track ?? 'weight');
   const [equipment, setEquipment] = useState<Equipment>('machine');
   const [sub, setSub] = useState<SubMuscle | null>(exercise ? subMuscleOf(exercise) : null);
+  const [secondary, setSecondary] = useState<SubMuscle[]>(exercise ? secondaryOf(exercise) : []);
   const builtIn = exercise ? EXERCISE_ALIASES[exercise.id] : undefined;
   const subOptions = SUBS_BY_GROUP[muscle];
+  const hasSubs = SUBS_BY_GROUP[muscle].length > 0;
+
+  // 주 부위를 고르면 부위 그룹도 그에 맞춤 (예: 삼두 → 팔)
+  const pickMain = (s: SubMuscle | null) => {
+    setSub(s);
+    if (s) {
+      setMuscle(groupOfSub(s));
+      setSecondary((xs) => xs.filter((x) => x !== s));
+    }
+  };
+  const toggleSecondary = (s: SubMuscle) => setSecondary((xs) => (xs.includes(s) ? xs.filter((x) => x !== s) : [...xs, s]));
+  // 몸 모형을 누를 때: 없음 → 주 부위 → 보조 부위 → 없음
+  const cycle = (s: SubMuscle) => {
+    if (sub === s) {
+      setSub(null);
+      setSecondary((xs) => [...xs, s]);
+    } else if (secondary.includes(s)) toggleSecondary(s);
+    else if (!sub) pickMain(s);
+    else toggleSecondary(s);
+  };
+  // 미리 보기: 주 부위 빨강, 보조 부위 노랑
+  const preview = useMemo(() => {
+    const m = new Map<SubMuscle, MuscleFatigue>();
+    for (const x of secondary) m.set(x, { score: 1, level: 1, hoursLeft: 0 });
+    if (sub) m.set(sub, { score: 9, level: 3, hoursLeft: 0 });
+    return m;
+  }, [sub, secondary]);
 
   const save = () => {
     const cleanAliases =
@@ -205,11 +235,16 @@ export function ExerciseForm({
         .filter(Boolean)
         .join(', ') || undefined;
     const validSub = sub && subOptions.includes(sub) ? sub : undefined;
+    // 기본 운동의 내장 보조 부위와 같으면 저장하지 않음 (나중에 기본값이 고쳐지면 따라가게)
+    const builtInSecondary = exercise ? (SECONDARY[exercise.id] ?? []) : [];
+    const sameAsBuiltIn =
+      exercise && !exercise.secondary && secondary.length === builtInSecondary.length && secondary.every((x) => builtInSecondary.includes(x));
+    const sec = sameAsBuiltIn ? undefined : secondary.filter((x) => x !== validSub);
     if (exercise) {
-      updateExercise(exercise.id, { name: name.trim(), muscle, track, aliases: cleanAliases, sub: validSub });
+      updateExercise(exercise.id, { name: name.trim(), muscle, track, aliases: cleanAliases, sub: validSub, secondary: sec });
       onSaved?.(exercise.id);
     } else {
-      const id = addExercise({ name: name.trim(), muscle, track, aliases: cleanAliases, sub: validSub });
+      const id = addExercise({ name: name.trim(), muscle, track, aliases: cleanAliases, sub: validSub, ...(sec?.length ? { secondary: sec } : {}) });
       addVariant({ exerciseId: id, equipment, unit: 'kg', loading: equipment === 'machine' ? 'stack' : undefined });
       onSaved?.(id);
     }
@@ -255,6 +290,7 @@ export function ExerciseForm({
               onClick={() => {
                 setMuscle(m);
                 if (sub && !SUBS_BY_GROUP[m].includes(sub)) setSub(null);
+                if (!SUBS_BY_GROUP[m].length) setSecondary([]);
               }}
             >
               {MUSCLE_LABEL[m]}
@@ -262,18 +298,55 @@ export function ExerciseForm({
           ))}
         </div>
       </div>
-      {subOptions.length > 1 && (
-        <div className="field">
-          <label>세부 부위 (선택)</label>
-          <div className="chips wrap">
-            {subOptions.map((s) => (
-              <button key={s} className={'chip' + (sub === s ? ' on' : '')} onClick={() => setSub(sub === s ? null : s)}>
-                {SUB_LABEL[s]}
-              </button>
-            ))}
+      {hasSubs && (
+        <>
+          <div className="field">
+            <label>주로 쓰는 부위</label>
+            <div className="chips wrap">
+              {subOptions.map((s) => (
+                <button key={s} className={'chip' + (sub === s ? ' on' : '')} onClick={() => pickMain(sub === s ? null : s)}>
+                  {SUB_LABEL[s]}
+                </button>
+              ))}
+            </div>
+            <div className="hint">통계의 세부 부위 세트 수와 근육 피로도에 써요. 다른 그룹 부위는 아래 몸 모형을 눌러 고를 수도 있어요.</div>
           </div>
-          <div className="hint">통계에서 "팔 → 이두 · 삼두"처럼 나눠 세는 데 써요.</div>
-        </div>
+
+          <div className="field">
+            <label>함께 쓰이는 부위 (선택, 여러 개)</label>
+            {MUSCLE_ORDER.filter((g) => SUBS_BY_GROUP[g].length).map((g) => (
+              <div key={g} className="row" style={{ gap: 6, alignItems: 'flex-start', marginBottom: 6 }}>
+                <span className="tiny faint" style={{ width: 30, flex: 'none', paddingTop: 7 }}>
+                  {MUSCLE_LABEL[g]}
+                </span>
+                <div className="chips wrap" style={{ flex: 1 }}>
+                  {SUBS_BY_GROUP[g]
+                    .filter((s) => s !== sub)
+                    .map((s) => (
+                      <button key={s} className={'chip sm' + (secondary.includes(s) ? ' on' : '')} onClick={() => toggleSecondary(s)}>
+                        {SUB_LABEL[s]}
+                      </button>
+                    ))}
+                </div>
+              </div>
+            ))}
+            <div className="hint">예: 벤치 프레스 → 삼두·전면 삼각. 근육 피로도에 세트의 절반만큼 반영돼요.</div>
+          </div>
+
+          <div className="card" style={{ padding: '12px 8px', marginBottom: 14 }}>
+            <BodyMap
+              fatigue={preview}
+              showLegend={false}
+              onPick={cycle}
+              hint={
+                <span className="tiny muted">
+                  <span style={{ color: LEVEL_COLOR[3] }}>■</span> 주 부위 <span style={{ color: LEVEL_COLOR[1], marginLeft: 8 }}>■</span> 함께 쓰는 부위
+                  <span className="faint"> · 누를 때마다 주 → 보조 → 해제</span>
+                </span>
+              }
+            />
+          </div>
+        </>
       )}
       <div className="field">
         <label>기록 방식</label>

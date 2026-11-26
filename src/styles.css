@@ -1217,3 +1217,10 @@ tr.done .num-in {
   color: inherit;
   font: inherit;
 }
+
+/* 작은 칩 (운동 만들기의 보조 부위 등 여러 개를 고를 때) */
+.chip.sm {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 13px;
+}

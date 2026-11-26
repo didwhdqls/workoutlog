@@ -119,17 +119,32 @@ function Figure({
 }
 
 /** 앞·뒤 몸 모형에 부위별 피로도를 색으로 표시. 부위를 누르면 이름과 회복까지 남은 시간 */
-export function BodyMap({ fatigue, showLegend = true }: { fatigue: Map<SubMuscle, MuscleFatigue>; showLegend?: boolean }) {
+export function BodyMap({
+  fatigue,
+  showLegend = true,
+  onPick,
+  hint,
+}: {
+  fatigue: Map<SubMuscle, MuscleFatigue>;
+  showLegend?: boolean;
+  /** 있으면 부위를 눌렀을 때 정보 대신 이 함수를 부름 (운동 만들기에서 부위 고르기) */
+  onPick?: (s: SubMuscle) => void;
+  /** onPick 모드에서 모형 아래에 보일 글 */
+  hint?: ReactNode;
+}) {
   const [selected, setSelected] = useState<SubMuscle | null>(null);
   const sel = selected ? fatigue.get(selected) : null;
+  const choose = (s: SubMuscle) => (onPick ? onPick(s) : setSelected(s));
   return (
     <div>
       <div className="row" style={{ gap: 8, alignItems: 'flex-start', justifyContent: 'center' }}>
-        <Figure shapes={FRONT} fatigue={fatigue} selected={selected} onSelect={setSelected} label="앞" />
-        <Figure shapes={BACK} fatigue={fatigue} selected={selected} onSelect={setSelected} label="뒤" />
+        <Figure shapes={FRONT} fatigue={fatigue} selected={onPick ? null : selected} onSelect={choose} label="앞" />
+        <Figure shapes={BACK} fatigue={fatigue} selected={onPick ? null : selected} onSelect={choose} label="뒤" />
       </div>
       <div className="small" style={{ textAlign: 'center', minHeight: 20, marginTop: 6 }}>
-        {selected && sel ? (
+        {onPick ? (
+          hint
+        ) : selected && sel ? (
           <>
             <b>{SUB_LABEL[selected]}</b> · {LEVEL_LABEL[sel.level]}
             {sel.level > 0 && <span className="muted"> · {fmtHoursLeft(sel.hoursLeft)}</span>}

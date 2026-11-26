@@ -26,6 +26,8 @@ export interface Exercise {
   aliases?: string;
   /** 세부 부위 (예: 'biceps'). 비우면 기본 운동은 내장 값, 직접 만든 운동은 부위 그룹만 집계 */
   sub?: string;
+  /** 함께 쓰이는 보조 부위 (세부 부위 id 목록). 비우면 기본 운동은 내장 값. 근육 피로도에 절반만큼 반영 */
+  secondary?: string[];
   custom?: boolean;
   archived?: boolean;
 }

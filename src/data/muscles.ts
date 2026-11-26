@@ -125,6 +125,13 @@ const SEED_SUB: Record<string, SubMuscle> = {
   plank: 'abs',
 };
 
+export const ALL_SUBS = Object.keys(SUB_LABEL) as SubMuscle[];
+export const isSub = (s: string): s is SubMuscle => s in SUB_LABEL;
+/** 세부 부위가 속한 부위 그룹 */
+export function groupOfSub(sub: SubMuscle): MuscleGroup {
+  return (Object.keys(SUBS_BY_GROUP) as MuscleGroup[]).find((g) => SUBS_BY_GROUP[g].includes(sub)) ?? 'other';
+}
+
 /** 운동의 세부 부위: 사용자가 정한 값 → 기본값. 부위 그룹과 맞지 않으면 무시 */
 export function subMuscleOf(x: Exercise | undefined): SubMuscle | null {
   if (!x) return null;
