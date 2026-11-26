@@ -480,6 +480,8 @@ const SPEC: ExSpec[] = [
   // v10: 인클라인 벤치에 기대 팔을 뒤로 늘인 채 하는 컬 (같은 무게라도 일반 덤벨 컬보다 가벼움)
   { id: 'incline-dumbbell-curl', name: '인클라인 덤벨 컬', muscle: 'arms', v: [e('dumbbell')] },
   { id: 'hammer-curl', name: '해머 컬', muscle: 'arms', v: [e('dumbbell'), e('cable', '로프')] },
+  // v15: 손등이 위로 오게(오버핸드) 잡는 컬. 전완(완요골근)이 주로 쓰임
+  { id: 'reverse-curl', name: '리버스 컬', muscle: 'arms', v: [e('barbell'), e('barbell', 'EZ바', '-ez'), e('cable'), e('dumbbell')] },
   { id: 'cable-curl', name: '케이블 컬', muscle: 'arms', v: [e('cable')] },
   {
     id: 'preacher-curl',
@@ -545,8 +547,9 @@ const SPEC: ExSpec[] = [
  * v12: 벤치 프레스·인클라인 벤치 프레스에 머신 추가
  * v13: 원암 하이 로우 추가
  * v14: 원암 시티드 로우 추가
+ * v15: 리버스 컬 추가
  */
-export const SEED_VERSION = 14;
+export const SEED_VERSION = 15;
 
 /** v4에서 숨긴 T바 로우 브랜드 머신 (기록이 없을 때만 숨김) */
 export const SEED_V4_HIDDEN = ['t-bar-row:m-hammer-plate', 't-bar-row:m-prime-plate', 't-bar-row:m-atlantis-plate'];

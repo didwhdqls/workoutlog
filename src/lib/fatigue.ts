@@ -79,6 +79,7 @@ export const SECONDARY: Record<string, SubMuscle[]> = {
 
   'barbell-curl': ['forearms'],
   'hammer-curl': ['forearms'],
+  'reverse-curl': ['biceps'],
   'preacher-curl': ['forearms'],
 };
 

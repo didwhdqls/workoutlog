@@ -76,6 +76,7 @@ export const EXERCISE_ALIASES: Record<string, string[]> = {
 
   // 팔
   'barbell-curl': ['Barbell Curl', 'EZ Bar Curl', 'BB Curl', '이지바 컬'],
+  'reverse-curl': ['Reverse Curl', 'Reverse Grip Curl', 'Overhand Curl', 'Pronated Curl', '리버스 그립 컬', '오버핸드 컬', '역그립 컬'],
   'dumbbell-curl': ['Dumbbell Curl', 'Bicep Curl', 'DB Curl', '이두 컬'],
   'incline-dumbbell-curl': ['Incline Dumbbell Curl', 'Incline Curl', 'Incline DB Curl', '인클라인 컬', '인클 컬'],
   'hammer-curl': ['Hammer Curl'],
