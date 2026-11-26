@@ -1224,3 +1224,16 @@ tr.done .num-in {
   padding: 0 10px;
   font-size: 13px;
 }
+
+/* 세트 표 머리의 무게 단위 (눌러서 kg/lb/칸 바꾸기) */
+.unit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  padding: 2px 0;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}

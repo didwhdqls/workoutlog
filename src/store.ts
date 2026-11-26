@@ -19,6 +19,7 @@ import type {
   Workout,
   WorkoutExercise,
   WorkoutReview,
+  WeightUnit,
 } from './types';
 
 export interface DataState {
@@ -40,6 +41,8 @@ interface Actions {
   updateExercise: (id: string, patch: Partial<Exercise>) => void;
   addVariant: (v: Omit<Variant, 'id' | 'custom'>) => string;
   updateVariant: (id: string, patch: Partial<Variant>) => void;
+  /** 기구의 무게 단위 바꾸기. convert면 지난 기록·루틴 무게를 새 단위로 환산 (kg ↔ lb만) */
+  changeVariantUnit: (id: string, unit: WeightUnit, convert: boolean) => void;
   // 헬스장
   addGym: (name: string) => string;
   renameGym: (id: string, name: string) => void;
@@ -170,6 +173,19 @@ export const useStore = create<Store>()(
           set((s) => {
             const v = s.variants.find((x) => x.id === id);
             if (v) Object.assign(v, patch);
+          }),
+        changeVariantUnit: (id, unit, convert) =>
+          set((s) => {
+            const v = s.variants.find((x) => x.id === id);
+            if (!v) return;
+            const from = v.unit ?? 'kg';
+            v.unit = unit;
+            if (!convert || from === unit || from === 'level' || unit === 'level') return;
+            const LB = 0.45359237;
+            const f = from === 'kg' ? 1 / LB : LB; // kg→lb ×2.2046, lb→kg ×0.4536
+            const conv = (w: number | null) => (w == null ? w : Math.round(w * f * 10) / 10);
+            for (const w of s.workouts) for (const e of w.exercises) if (e.variantId === id) for (const st of e.sets) st.weight = conv(st.weight);
+            for (const r of s.routines) for (const it of r.items) if (it.variantId === id) for (const p of it.sets) p.weight = conv(p.weight);
           }),
 
         // ── 헬스장 ──

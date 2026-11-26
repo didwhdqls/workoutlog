@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { ask, askText } from '../components/Dialog';
+import { ask, askText, notify } from '../components/Dialog';
 import { ExercisePicker } from '../components/ExercisePicker';
 import { GripChip, gripText, withRo } from '../components/GripPicker';
 import { Icon } from '../components/Icon';
@@ -15,7 +15,7 @@ import { findPrevious, isPerSide, loadMode } from '../lib/stats';
 import { unlockAudio } from '../lib/sound';
 import { fmtDuration, fmtNum, fmtRest, fmtShortDate, unitLabel, variantName } from '../lib/util';
 import { useMaps, useStore } from '../store';
-import type { SetEntry, SetKind, Workout, WorkoutExercise } from '../types';
+import type { SetEntry, SetKind, WeightUnit, Workout, WorkoutExercise } from '../types';
 
 
 export function Elapsed({ since }: { since: number }) {
@@ -291,6 +291,28 @@ function ExerciseCard({
 
   const [menu, setMenu] = useState(false);
   const [restMenu, setRestMenu] = useState(false);
+  const [unitMenu, setUnitMenu] = useState(false);
+  const allWorkoutsForUnit = useStore((s) => s.workouts);
+
+  // 운동 중에 무게 단위 바꾸기 (기구 단위라 다음 기록에도 그대로). 지난 기록이 있으면 환산할지 물어봄
+  const changeUnit = async (to: WeightUnit) => {
+    setUnitMenu(false);
+    if (!variant || to === unit) return;
+    const pastSessions = allWorkoutsForUnit.filter((w) => w.exercises.some((e) => e.variantId === variant.id && e.sets.some((x) => x.done))).length;
+    let convert = false;
+    if (pastSessions > 0 && unit !== 'level' && to !== 'level') {
+      convert = await ask({
+        title: `지난 기록 ${pastSessions}번을 ${unitLabel(to)}로 환산할까요?`,
+        message:
+          unit === 'kg'
+            ? `지금까지 kg으로 적은 기록이면 환산하세요 (50kg → 110.2lb). 원래 lb 숫자를 kg로 잘못 표시했던 거라면 숫자는 그대로 두세요.`
+            : `지금까지 lb로 적은 기록이면 환산하세요 (110lb → 49.9kg). 원래 kg 숫자를 lb로 잘못 표시했던 거라면 숫자는 그대로 두세요.`,
+        ok: '환산하기',
+        cancel: '숫자 그대로',
+      });
+    }
+    a().changeVariantUnit(variant.id, to, convert);
+  };
   const [pickVariant, setPickVariant] = useState(false);
   const [editVariant, setEditVariant] = useState(false);
   const [setMenuFor, setSetMenuFor] = useState<SetEntry | null>(null);
@@ -385,8 +407,15 @@ function ExerciseCard({
             <th>이전</th>
             {track === 'weight' && (
               <th style={{ width: 76 }} title={perSide ? '한쪽 무게로 적어요. 볼륨은 ×2로 계산돼요.' : undefined}>
-                {mode === 'assisted' ? '보조 ' : perSide && mode === 'external' ? '한쪽 ' : ''}
-                {unitLabel(unit)}
+                <button
+                  className="unit-btn"
+                  onClick={() => (variant ? setUnitMenu(true) : notify('기구를 먼저 골라 주세요', '무게 단위는 기구마다 정해져요. 위의 "어떤 기구인가요?"에서 기구를 고른 뒤 바꿔 주세요.'))}
+                  aria-label="무게 단위 바꾸기"
+                >
+                  {mode === 'assisted' ? '보조 ' : perSide && mode === 'external' ? '한쪽 ' : ''}
+                  {unitLabel(unit)}
+                  <Icon name="down" size={10} />
+                </button>
               </th>
             )}
             {track !== 'time' && <th style={{ width: 76 }}>회</th>}
@@ -516,6 +545,17 @@ function ExerciseCard({
               },
             },
           ]}
+        />
+      )}
+      {unitMenu && (
+        <ActionSheet
+          title="무게 단위"
+          onClose={() => setUnitMenu(false)}
+          actions={(['kg', 'lb', 'level'] as WeightUnit[]).map((u) => ({
+            label: u === 'kg' ? 'kg (킬로그램)' : u === 'lb' ? 'lb (파운드)' : '칸 (핀 번호)',
+            active: unit === u,
+            onClick: () => changeUnit(u),
+          }))}
         />
       )}
       {restMenu && (
