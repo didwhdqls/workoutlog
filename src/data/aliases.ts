@@ -78,7 +78,7 @@ export const EXERCISE_ALIASES: Record<string, string[]> = {
   'incline-dumbbell-curl': ['Incline Dumbbell Curl', 'Incline Curl', 'Incline DB Curl', '인클라인 컬', '인클 컬'],
   'hammer-curl': ['Hammer Curl'],
   'cable-curl': ['Cable Curl', 'Cable Bicep Curl'],
-  'preacher-curl': ['Preacher Curl', 'Scott Curl', '스캇 컬'],
+  'preacher-curl': ['Preacher Curl', 'Scott Curl', '스캇 컬', '스콧 컬', '프리처', 'EZ바 프리처'],
   'triceps-pushdown': ['Triceps Pushdown', 'Tricep Pushdown', 'Rope Pushdown', 'Pushdown', '푸쉬다운', '케이블 푸시다운'],
   'overhead-triceps': ['Overhead Triceps Extension', 'Overhead Extension', 'French Press', '프렌치 프레스'],
   'skull-crusher': ['Skull Crusher', 'Lying Triceps Extension', '스컬 크러셔'],
@@ -177,8 +177,15 @@ export const LOADING_ALIASES: Record<Loading, string[]> = {
 };
 
 /** 검색·비교용 정규화: 대소문자, 띄어쓰기, 하이픈, 점 등을 무시 */
+/** 자주 섞어 쓰는 표기: 프리쳐 ↔ 프리처, 쥬스 ↔ 주스 처럼 ㅈ·ㅊ 뒤 이중모음을 단모음으로 맞춤 */
+const SOFTEN: Record<string, string> = { 쳐: '처', 져: '저', 쵸: '초', 죠: '조', 츄: '추', 쥬: '주', 챠: '차', 쟈: '자' };
+
 export function norm(s: string): string {
-  return s.normalize('NFC').toLowerCase().replace(/[\s\-_.·,()/']+/g, '');
+  return s
+    .normalize('NFC')
+    .toLowerCase()
+    .replace(/[\s\-_.·,()/']+/g, '')
+    .replace(/[쳐져쵸죠츄쥬챠쟈]/g, (c) => SOFTEN[c]);
 }
 
 /**

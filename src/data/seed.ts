@@ -425,6 +425,8 @@ const SPEC: ExSpec[] = [
       m('panatta', 'stack'),
       m('hammer', 'plate'),
       ...many('stack', ['prime', 'atlantis']),
+      // v11
+      e('cable'),
     ],
   },
   {
@@ -471,8 +473,9 @@ const SPEC: ExSpec[] = [
  * v8: 원암 랫 풀다운 추가
  * v9: 롱 풀 추가
  * v10: 인클라인 덤벨 컬 추가
+ * v11: 프리처 컬에 케이블 추가
  */
-export const SEED_VERSION = 10;
+export const SEED_VERSION = 11;
 
 /** v4에서 숨긴 T바 로우 브랜드 머신 (기록이 없을 때만 숨김) */
 export const SEED_V4_HIDDEN = ['t-bar-row:m-hammer-plate', 't-bar-row:m-prime-plate', 't-bar-row:m-atlantis-plate'];
