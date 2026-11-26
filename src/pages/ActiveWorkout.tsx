@@ -286,7 +286,7 @@ function ExerciseCard({
   const variant = entry.variantId ? maps.v.get(entry.variantId) : undefined;
   const track = exercise?.track ?? 'weight';
   const unit = variant?.unit ?? 'kg';
-  const perSide = isPerSide(entry.exerciseId, variant);
+  const perSide = isPerSide(exercise ?? entry.exerciseId, variant);
   const mode = loadMode(entry, exercise, variant);
 
   const [menu, setMenu] = useState(false);

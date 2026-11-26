@@ -91,7 +91,7 @@ export function computeWeek(
       const v = entry.variantId ? variants.get(entry.variantId) : undefined;
       const unit = v?.unit || 'kg';
       const mode = loadMode(entry, x, v);
-      const f = loadFactor(entry.exerciseId, v);
+      const f = loadFactor(x ?? entry.exerciseId, v);
       const sub = subMuscleOf(x);
 
       for (const s of entry.sets) {
@@ -163,7 +163,7 @@ export function periodSeries(
       const v = entry.variantId ? variants.get(entry.variantId) : undefined;
       const unit = v?.unit || 'kg';
       const mode = loadMode(entry, x, v);
-      const f = loadFactor(entry.exerciseId, v);
+      const f = loadFactor(x ?? entry.exerciseId, v);
       for (const s of entry.sets) {
         if (!isWorkSet(s)) continue;
         touched = true;

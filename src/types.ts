@@ -28,6 +28,8 @@ export interface Exercise {
   sub?: string;
   /** 함께 쓰이는 보조 부위 (세부 부위 id 목록). 비우면 기본 운동은 내장 값. 근육 피로도에 절반만큼 반영 */
   secondary?: string[];
+  /** 한 팔·한 다리씩 하는 운동(원암·원레그). 무게는 한쪽 기준, 볼륨 ×2. 비우면 기본 운동은 내장 값 */
+  unilateral?: boolean;
   custom?: boolean;
   archived?: boolean;
 }

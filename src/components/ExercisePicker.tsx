@@ -3,6 +3,7 @@ import { EXERCISE_ALIASES } from '../data/aliases';
 import { SUB_LABEL, SUBS_BY_GROUP, groupOfSub, subMuscleOf, type SubMuscle } from '../data/muscles';
 import { BodyMap, LEVEL_COLOR } from './BodyMap';
 import { SECONDARY, secondaryOf, type MuscleFatigue } from '../lib/fatigue';
+import { isUnilateral } from '../lib/stats';
 import { buildSearchIndex, searchExercises } from '../lib/search';
 import { useStore } from '../store';
 import type { Equipment, Exercise, MuscleGroup, TrackType } from '../types';
@@ -197,6 +198,7 @@ export function ExerciseForm({
   const [equipment, setEquipment] = useState<Equipment>('machine');
   const [sub, setSub] = useState<SubMuscle | null>(exercise ? subMuscleOf(exercise) : null);
   const [secondary, setSecondary] = useState<SubMuscle[]>(exercise ? secondaryOf(exercise) : []);
+  const [unilateral, setUnilateral] = useState(exercise ? isUnilateral(exercise) : false);
   const builtIn = exercise ? EXERCISE_ALIASES[exercise.id] : undefined;
   const subOptions = SUBS_BY_GROUP[muscle];
   const hasSubs = SUBS_BY_GROUP[muscle].length > 0;
@@ -240,11 +242,21 @@ export function ExerciseForm({
     const sameAsBuiltIn =
       exercise && !exercise.secondary && secondary.length === builtInSecondary.length && secondary.every((x) => builtInSecondary.includes(x));
     const sec = sameAsBuiltIn ? undefined : secondary.filter((x) => x !== validSub);
+    // 기본 운동은 내장 값과 다를 때만 저장
+    const uni = exercise ? (unilateral === isUnilateral(exercise.id) ? undefined : unilateral) : unilateral || undefined;
     if (exercise) {
-      updateExercise(exercise.id, { name: name.trim(), muscle, track, aliases: cleanAliases, sub: validSub, secondary: sec });
+      updateExercise(exercise.id, { name: name.trim(), muscle, track, aliases: cleanAliases, sub: validSub, secondary: sec, unilateral: uni });
       onSaved?.(exercise.id);
     } else {
-      const id = addExercise({ name: name.trim(), muscle, track, aliases: cleanAliases, sub: validSub, ...(sec?.length ? { secondary: sec } : {}) });
+      const id = addExercise({
+        name: name.trim(),
+        muscle,
+        track,
+        aliases: cleanAliases,
+        sub: validSub,
+        ...(sec?.length ? { secondary: sec } : {}),
+        ...(uni ? { unilateral: true } : {}),
+      });
       addVariant({ exerciseId: id, equipment, unit: 'kg', loading: equipment === 'machine' ? 'stack' : undefined });
       onSaved?.(id);
     }
@@ -362,6 +374,24 @@ export function ExerciseForm({
           </button>
         </div>
       </div>
+      {track !== 'time' && (
+        <div className="field">
+          <label>한쪽씩 하는 운동인가요?</label>
+          <div className="seg">
+            <button className={!unilateral ? 'on' : ''} onClick={() => setUnilateral(false)}>
+              양쪽 함께
+            </button>
+            <button className={unilateral ? 'on' : ''} onClick={() => setUnilateral(true)}>
+              원암 · 원레그
+            </button>
+          </div>
+          <div className="hint">
+            {unilateral
+              ? '한 팔(다리)씩 번갈아 하는 운동이에요. 무게는 한쪽 기준으로 적고, 볼륨은 양쪽을 합쳐 ×2로 계산해요. 예: 원암 케이블 로우 20kg × 10회 → 400kg'
+              : '양손·양발로 함께 드는 운동이에요. 덤벨은 기구 설정에 따라 덤벨 1개 무게 기준(×2)으로 계산해요.'}
+          </div>
+        </div>
+      )}
       {!exercise && (
         <div className="field">
           <label>첫 기구</label>

@@ -47,7 +47,7 @@ export function VariantForm({
   const [memo, setMemo] = useState(variant?.memo ?? '');
   // 입력 무게가 한쪽 무게인지. 직접 고르지 않으면 기구 종류·운동에 따른 기본값
   const [perSidePick, setPerSidePick] = useState<boolean | undefined>(variant?.perSide);
-  const perSideDefault = defaultPerSide(exerciseId, equipment);
+  const perSideDefault = defaultPerSide(exercise ?? exerciseId, equipment);
   const perSide = perSidePick ?? perSideDefault;
   const showPerSide = exercise?.track !== 'time' && exercise?.track !== 'reps' && equipment !== 'bodyweight';
 

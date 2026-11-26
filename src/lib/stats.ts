@@ -45,16 +45,25 @@ const SINGLE_DUMBBELL = new Set(['overhead-triceps']);
 /** 한쪽씩 양쪽을 다 하는 운동: 어떤 기구든 입력 무게는 한쪽 무게 */
 const UNILATERAL = new Set(['dumbbell-row', 'one-arm-lateral-raise', 'one-arm-lat-pulldown']);
 
-/** 기구를 따로 정하지 않았을 때의 기본값 */
-export function defaultPerSide(exerciseId: string, equipment: Variant['equipment'] | undefined): boolean {
-  if (UNILATERAL.has(exerciseId)) return true;
-  return equipment === 'dumbbell' && !SINGLE_DUMBBELL.has(exerciseId);
+/** 운동 id 또는 운동 자체 (직접 만든 원암 운동은 운동에 표시가 있어서 운동을 넘겨야 함) */
+type ExRef = string | Pick<Exercise, 'id' | 'unilateral'>;
+const exId = (r: ExRef) => (typeof r === 'string' ? r : r.id);
+
+/** 한 팔·한 다리씩 하는 운동인지: 운동에 정해 둔 값 → 기본 운동 내장 값 */
+export function isUnilateral(r: ExRef): boolean {
+  return (typeof r !== 'string' && r.unilateral != null ? r.unilateral : undefined) ?? UNILATERAL.has(exId(r));
 }
-export function isPerSide(exerciseId: string, v: Variant | undefined): boolean {
-  return v?.perSide ?? defaultPerSide(exerciseId, v?.equipment);
+
+/** 기구를 따로 정하지 않았을 때의 기본값 */
+export function defaultPerSide(r: ExRef, equipment: Variant['equipment'] | undefined): boolean {
+  if (isUnilateral(r)) return true;
+  return equipment === 'dumbbell' && !SINGLE_DUMBBELL.has(exId(r));
+}
+export function isPerSide(r: ExRef, v: Variant | undefined): boolean {
+  return v?.perSide ?? defaultPerSide(r, v?.equipment);
 }
 /** 볼륨 계산 배수: 한쪽 무게로 적는 기구는 2 (예: 덤벨 5kg 레터럴 레이즈 10회 = 100kg) */
-export const loadFactor = (exerciseId: string, v: Variant | undefined) => (isPerSide(exerciseId, v) ? 2 : 1);
+export const loadFactor = (r: ExRef, v: Variant | undefined) => (isPerSide(r, v) ? 2 : 1);
 
 /**
  * 세트 하나의 볼륨(kg). bw는 그날 체중 (없으면 맨몸·어시스트 운동은 0).
@@ -301,7 +310,7 @@ export function workoutVolumeKg(
     const v = entry.variantId ? variants.get(entry.variantId) : undefined;
     const mode = loadMode(entry, ex?.get(entry.exerciseId), v);
     const unit = v?.unit || 'kg';
-    const f = loadFactor(entry.exerciseId, v);
+    const f = loadFactor(ex?.get(entry.exerciseId) ?? entry.exerciseId, v);
     for (const s of entry.sets) if (isWorkSet(s)) total += setVolumeKg(s, mode, unit, bw, f);
   }
   return total;

@@ -297,9 +297,9 @@ export function VariantDetail() {
         workouts,
         variantId,
         gripFilter === 'all' ? undefined : gripFilter === 'default' ? null : gripFilter,
-        loadFactor(id, variant),
+        loadFactor(exercise ?? id, variant),
       ),
-    [workouts, variantId, gripFilter, id, variant],
+    [workouts, variantId, gripFilter, id, variant, exercise],
   );
   const sum = useMemo(() => summarizeVariant(sessions, track), [sessions, track]);
 
