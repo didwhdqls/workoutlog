@@ -23,13 +23,13 @@ export const isWorkSet = (s: SetEntry) => s.done && s.kind !== 'warmup';
 
 // ─── 볼륨 ────────────────────────────────────────────────────
 /** 무게를 기구가 받쳐 주는(어시스트) 운동: 실제 부하 = 체중 − 보조 무게 */
-const ASSISTED = new Set(['assisted-pull-up']);
+export const ASSISTED = new Set(['assisted-pull-up', 'assisted-dip']);
 
 /**
  * 한 운동 항목의 세트 볼륨 계산 방법
  *  - external: 무게 × 횟수 (일반)
  *  - bodyweight: (체중 + 추가 무게) × 횟수 — 풀업·딥스처럼 기구가 '맨몸'인 운동 (복근 운동은 몸 전체를 들지 않아 제외)
- *  - assisted: (체중 − 보조 무게) × 횟수 — 어시스트 풀업
+ *  - assisted: (체중 − 보조 무게) × 횟수 — 어시스트 풀업·딥스
  */
 export type LoadMode = 'external' | 'bodyweight' | 'assisted';
 
@@ -266,7 +266,13 @@ export function findPRs(workout: Workout, all: Workout[], tracks: Record<string,
         return !a || (v as number) > (f(a) as number) ? s : a;
       }, null);
 
-    if (track === 'weight') {
+    if (track === 'weight' && ASSISTED.has(entry.exerciseId)) {
+      // 어시스트 운동은 보조 무게가 낮을수록 잘한 것: 이전보다 적은 보조로 해낸 세트
+      const lifted = (s: SetEntry) => s.kind !== 'warmup' && (s.reps ?? 0) > 0 && s.weight != null;
+      const priorMin = prior.flatMap((x) => x.sets.filter(lifted)).reduce<number | null>((a, s) => (a == null || s.weight! < a ? s.weight! : a), null);
+      const low = work.filter(lifted).reduce<SetEntry | null>((a, s) => (!a || s.weight! < a.weight! ? s : a), null);
+      if (low && priorMin != null && low.weight! < priorMin) add(low.id, '최소 보조');
+    } else if (track === 'weight') {
       const w = best((s) => ((s.reps ?? 0) > 0 ? s.weight : null));
       if (w && p.maxWeight != null && w.weight! > p.maxWeight) add(w.id, '최고 무게');
       const e = best((s) => e1rm(s.weight, s.reps));

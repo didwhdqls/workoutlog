@@ -282,6 +282,13 @@ const SPEC: ExSpec[] = [
     muscle: 'chest',
     v: [m('lf', 'stack'), m('tg', 'stack'), m('hammer', 'plate'), m('panatta', 'stack'), ...many('stack', ['prime', 'atlantis'])],
   },
+  // v7: 무게를 기구가 받쳐 주는 딥스 (어시스트 풀업과 같은 '딥/친 어시스트' 기구가 많음). 무게 = 보조 무게
+  {
+    id: 'assisted-dip',
+    name: '어시스트 딥스',
+    muscle: 'chest',
+    v: [m('lf', 'stack'), m('tg', 'stack'), m('matrix', 'stack'), m('cybex', 'stack'), ...many('stack', ['precor', 'hoist', 'atlantis'])],
+  },
 
   // ── 어깨 ──
   { id: 'overhead-press', name: '오버헤드 프레스', muscle: 'shoulders', v: [e('barbell'), e('dumbbell'), e('smith')] },
@@ -439,8 +446,9 @@ const SPEC: ExSpec[] = [
  * v4: 머신 T바 로우 분리. T바 로우의 브랜드 머신은 숨기고(SEED_V4_HIDDEN), 일반 머신은 스탠딩 거치대로 표시
  * v5: '머신 T바 로우' → '체스트 서포티드 T바 로우'로 이름 변경 (서서 하는 T바 로우와 구분)
  * v6: 원암 레터럴 레이즈 추가
+ * v7: 어시스트 딥스 추가
  */
-export const SEED_VERSION = 6;
+export const SEED_VERSION = 7;
 
 /** v4에서 숨긴 T바 로우 브랜드 머신 (기록이 없을 때만 숨김) */
 export const SEED_V4_HIDDEN = ['t-bar-row:m-hammer-plate', 't-bar-row:m-prime-plate', 't-bar-row:m-atlantis-plate'];

@@ -78,6 +78,7 @@ const SEED_SUB: Record<string, SubMuscle> = {
   'cable-crossover': 'chest',
   'dumbbell-fly': 'chest',
   dips: 'chest',
+  'assisted-dip': 'chest',
   'dip-machine': 'chest',
 
   'overhead-press': 'front-delt',

@@ -385,7 +385,7 @@ function ExerciseCard({
             <th>이전</th>
             {track === 'weight' && (
               <th style={{ width: 76 }} title={perSide ? '한쪽 무게로 적어요. 볼륨은 ×2로 계산돼요.' : undefined}>
-                {perSide && mode === 'external' ? '한쪽 ' : ''}
+                {mode === 'assisted' ? '보조 ' : perSide && mode === 'external' ? '한쪽 ' : ''}
                 {unitLabel(unit)}
               </th>
             )}

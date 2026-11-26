@@ -52,6 +52,7 @@ const SECONDARY: Record<string, SubMuscle[]> = {
   'chest-press': ['triceps', 'front-delt'],
   'incline-chest-press': ['triceps', 'front-delt'],
   dips: ['triceps', 'front-delt'],
+  'assisted-dip': ['triceps', 'front-delt'],
   'dip-machine': ['triceps', 'front-delt'],
   'pec-fly': ['front-delt'],
   'cable-crossover': ['front-delt'],

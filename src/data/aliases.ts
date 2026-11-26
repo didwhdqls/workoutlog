@@ -26,7 +26,7 @@ export const EXERCISE_ALIASES: Record<string, string[]> = {
   'barbell-row': ['Barbell Row', 'Bent Over Row', 'BB Row', '벤트오버 로우'],
   'dumbbell-row': ['Dumbbell Row', 'One Arm Row', 'DB Row', '덤벨 로우'],
   'pull-up': ['Pull Up', 'Pullup', 'Chin Up', '턱걸이', '친업'],
-  'assisted-pull-up': ['Assisted Pull Up', 'Assisted Chin Up', '어시스티드 풀업', '어시스트 턱걸이'],
+  'assisted-pull-up': ['Assisted Pull Up', 'Assisted Chin Up', 'Gravitron', '어시스티드 풀업', '어시스트 턱걸이', '친 어시스트', '그래비트론'],
   deadlift: ['Deadlift', 'DL', 'Conventional Deadlift', 'Trap Bar Deadlift', '데드', '컨벤셔널'],
   'back-extension': ['Back Extension', 'Hyperextension', '하이퍼 익스텐션', '백익스'],
   'straight-arm-pulldown': ['Straight Arm Pulldown', 'Straight Arm Lat Pulldown', '암풀다운'],
@@ -41,6 +41,7 @@ export const EXERCISE_ALIASES: Record<string, string[]> = {
   'cable-crossover': ['Cable Crossover', 'Cable Fly', '케이블 플라이'],
   'dumbbell-fly': ['Dumbbell Fly', 'DB Fly', 'Chest Fly'],
   dips: ['Dips', 'Dip', 'Parallel Bar Dip'],
+  'assisted-dip': ['Assisted Dip', 'Assisted Dips', 'Gravitron', '어시스티드 딥스', '어시스트 딥', '딥 어시스트', '그래비트론'],
   'dip-machine': ['Dip Machine', 'Seated Dip', '시티드 딥스'],
 
   // 어깨

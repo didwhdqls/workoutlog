@@ -219,6 +219,7 @@ function EditCard({
   const track = exercise?.track ?? 'weight';
   const unit = variant?.unit ?? 'kg';
   const perSide = isPerSide(entry.exerciseId, variant) && loadMode(entry, exercise, variant) === 'external';
+  const assisted = loadMode(entry, exercise, variant) === 'assisted';
   const [menu, setMenu] = useState(false);
   const [pickVariant, setPickVariant] = useState(false);
   const [replacing, setReplacing] = useState(false);
@@ -265,7 +266,7 @@ function EditCard({
         <thead>
           <tr>
             <th style={{ width: 40 }}>세트</th>
-            {track === 'weight' && <th>{perSide ? '한쪽 ' : ''}{unitLabel(unit)}</th>}
+            {track === 'weight' && <th>{assisted ? '보조 ' : perSide ? '한쪽 ' : ''}{unitLabel(unit)}</th>}
             {track !== 'time' && <th>회</th>}
             {track === 'time' && <th>시간</th>}
             <th style={{ width: 42 }} />
