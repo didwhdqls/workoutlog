@@ -109,6 +109,7 @@ const SEED_SUB: Record<string, SubMuscle> = {
 
   'barbell-curl': 'biceps',
   'dumbbell-curl': 'biceps',
+  'incline-dumbbell-curl': 'biceps',
   'hammer-curl': 'biceps',
   'cable-curl': 'biceps',
   'preacher-curl': 'biceps',

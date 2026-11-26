@@ -409,6 +409,8 @@ const SPEC: ExSpec[] = [
   // ── 팔 ──
   { id: 'barbell-curl', name: '바벨 컬', muscle: 'arms', v: [e('barbell'), e('barbell', 'EZ바', '-ez')] },
   { id: 'dumbbell-curl', name: '덤벨 컬', muscle: 'arms', v: [e('dumbbell')] },
+  // v10: 인클라인 벤치에 기대 팔을 뒤로 늘인 채 하는 컬 (같은 무게라도 일반 덤벨 컬보다 가벼움)
+  { id: 'incline-dumbbell-curl', name: '인클라인 덤벨 컬', muscle: 'arms', v: [e('dumbbell')] },
   { id: 'hammer-curl', name: '해머 컬', muscle: 'arms', v: [e('dumbbell'), e('cable', '로프')] },
   { id: 'cable-curl', name: '케이블 컬', muscle: 'arms', v: [e('cable')] },
   {
@@ -468,8 +470,9 @@ const SPEC: ExSpec[] = [
  * v7: 어시스트 딥스 추가
  * v8: 원암 랫 풀다운 추가
  * v9: 롱 풀 추가
+ * v10: 인클라인 덤벨 컬 추가
  */
-export const SEED_VERSION = 9;
+export const SEED_VERSION = 10;
 
 /** v4에서 숨긴 T바 로우 브랜드 머신 (기록이 없을 때만 숨김) */
 export const SEED_V4_HIDDEN = ['t-bar-row:m-hammer-plate', 't-bar-row:m-prime-plate', 't-bar-row:m-atlantis-plate'];
