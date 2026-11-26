@@ -11,6 +11,7 @@ import { useMaps, useStore } from '../store';
 import { MUSCLE_LABEL } from '../types';
 import { ActiveTime } from './ActiveWorkout';
 import { WhenSheet } from '../components/WhenSheet';
+import { RoutineLine } from '../components/RoutineSummary';
 import { BodyMap, FatigueList } from '../components/BodyMap';
 import { fatigueAt } from '../lib/fatigue';
 import { WorkoutCard } from './History';
@@ -210,13 +211,12 @@ export function Home() {
       ) : (
         <div className="list">
           {quick.map((r) => {
-            const muscles = [...new Set(r.items.map((i) => maps.ex.get(i.exerciseId)?.muscle).filter(Boolean))];
             return (
               <div key={r.id} className="list-item">
                 <Link to={`/routines/${r.id}`} className="grow">
                   <div className="title ellipsis">{r.name}</div>
                   <div className="sub">
-                    {r.items.length}개 운동 · {muscles.map((m) => MUSCLE_LABEL[m!]).join(', ') || '비어 있음'}
+                    {r.items.length ? <RoutineLine r={r} /> : '비어 있음'}
                   </div>
                 </Link>
                 <button className="btn soft sm" disabled={!!active || r.items.length === 0} onClick={() => start(r.id)}>

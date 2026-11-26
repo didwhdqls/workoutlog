@@ -6,6 +6,7 @@ import { GripChip } from '../components/GripPicker';
 import { Icon } from '../components/Icon';
 import { NumInput, TimeInput } from '../components/NumInput';
 import { ReorderSheet } from '../components/ReorderSheet';
+import { RoutineLine, RoutineSummary } from '../components/RoutineSummary';
 import { RestPicker } from '../components/RestPicker';
 import { ActionSheet } from '../components/Sheet';
 import { VariantPicker } from '../components/VariantPicker';
@@ -42,6 +43,9 @@ export function Routines() {
             <Link to={`/routines/${r.id}`} className="grow">
               <div style={{ fontWeight: 700, fontSize: 16 }} className="ellipsis">
                 {r.name}
+              </div>
+              <div className="tiny muted ellipsis" style={{ marginTop: 2 }}>
+                <RoutineLine r={r} />
               </div>
             </Link>
             <button
@@ -146,6 +150,8 @@ export function RoutineEdit() {
         style={{ fontSize: 18, fontWeight: 700, background: 'var(--surface)', marginBottom: 14 }}
         autoFocus={isNew}
       />
+
+      <RoutineSummary r={draft} />
 
       {draft.items.length > 1 && (
         <div className="section-title" style={{ marginTop: 0 }}>
