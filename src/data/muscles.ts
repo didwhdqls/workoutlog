@@ -78,6 +78,8 @@ const SEED_SUB: Record<string, SubMuscle> = {
   'incline-bench-press': 'upper-chest',
   'chest-press': 'chest',
   'incline-chest-press': 'upper-chest',
+  'decline-bench-press': 'chest',
+  'decline-chest-press': 'chest',
   'pec-fly': 'chest',
   'cable-crossover': 'chest',
   'dumbbell-fly': 'chest',

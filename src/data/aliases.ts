@@ -41,6 +41,8 @@ export const EXERCISE_ALIASES: Record<string, string[]> = {
   'incline-bench-press': ['Incline Bench Press', 'Incline Press', '인클라인 벤치'],
   'chest-press': ['Chest Press', 'Machine Chest Press', 'Seated Chest Press', '머신 체스트 프레스', '체프'],
   'incline-chest-press': ['Incline Chest Press', 'Incline Machine Press', '인클라인 머신'],
+  'decline-bench-press': ['Decline Bench Press', 'Decline Press', 'Decline Barbell Press', '디클라인 벤치', '디클 벤치', '디클라인 프레스'],
+  'decline-chest-press': ['Decline Chest Press', 'Decline Machine Press', 'Machine Decline Press', '디클라인 머신', '디클 머신', '디클라인 프레스'],
   'pec-fly': ['Pec Deck', 'Pec Fly', 'Chest Fly Machine', 'Butterfly', '펙덱', '체스트 플라이', '버터플라이'],
   'cable-crossover': ['Cable Crossover', 'Cable Fly', '케이블 플라이'],
   'dumbbell-fly': ['Dumbbell Fly', 'DB Fly', 'Chest Fly'],

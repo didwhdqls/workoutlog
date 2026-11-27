@@ -55,6 +55,8 @@ export const SECONDARY: Record<string, SubMuscle[]> = {
   'incline-bench-press': ['triceps', 'front-delt'],
   'chest-press': ['triceps', 'front-delt'],
   'incline-chest-press': ['triceps', 'front-delt'],
+  'decline-bench-press': ['triceps', 'front-delt'],
+  'decline-chest-press': ['triceps', 'front-delt'],
   dips: ['triceps', 'front-delt'],
   'assisted-dip': ['triceps', 'front-delt'],
   'dip-machine': ['triceps', 'front-delt'],

@@ -323,6 +323,24 @@ const SPEC: ExSpec[] = [
       g('stack'),
     ],
   },
+  // v17: 디클라인(머리가 아래로 기운) 벤치에서 미는 프레스. 아랫가슴 위주
+  {
+    id: 'decline-bench-press',
+    name: '디클라인 벤치 프레스',
+    muscle: 'chest',
+    v: [
+      e('barbell'),
+      e('dumbbell'),
+      e('smith'),
+      m('hammer', 'plate', 'ISO-래터럴 디클라인 프레스'),
+      m('panatta', 'plate'),
+      m('gym80', 'plate'),
+      m('atlantis', 'plate'),
+      m('prime', 'plate'),
+      g('plate'),
+      g('stack'),
+    ],
+  },
   {
     id: 'chest-press',
     name: '체스트 프레스',
@@ -357,6 +375,22 @@ const SPEC: ExSpec[] = [
       m('lf', 'stack'),
       m('tg', 'stack'),
       ...many('plate', ['prime', 'atlantis', 'watson', 'gymleco', 'gym80']),
+    ],
+  },
+  // v17: 앉아서 아래쪽으로 미는 디클라인 체스트 프레스 머신
+  {
+    id: 'decline-chest-press',
+    name: '디클라인 체스트 프레스',
+    muscle: 'chest',
+    v: [
+      m('hammer', 'plate', 'ISO-래터럴 디클라인 프레스'),
+      m('panatta', 'plate'),
+      m('arsenal', 'plate'),
+      m('lf', 'stack'),
+      m('tg', 'stack'),
+      ...many('plate', ['prime', 'atlantis', 'gym80']),
+      g('plate'),
+      g('stack'),
     ],
   },
   { id: 'pec-fly', name: '펙덱 플라이', muscle: 'chest', v: stackAll() },
@@ -551,8 +585,9 @@ const SPEC: ExSpec[] = [
  * v14: 원암 시티드 로우 추가
  * v15: 리버스 컬 추가
  * v16: 스티프 레그 데드리프트 추가
+ * v17: 디클라인 벤치 프레스·디클라인 체스트 프레스 추가
  */
-export const SEED_VERSION = 16;
+export const SEED_VERSION = 17;
 
 /** v4에서 숨긴 T바 로우 브랜드 머신 (기록이 없을 때만 숨김) */
 export const SEED_V4_HIDDEN = ['t-bar-row:m-hammer-plate', 't-bar-row:m-prime-plate', 't-bar-row:m-atlantis-plate'];

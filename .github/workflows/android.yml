@@ -2,9 +2,11 @@
 # 폰에서 https://github.com/didwhdqls/workoutlog/releases/tag/android-latest 열어 APK를 받아 설치
 name: Android APK
 
+# 잠시 멈춤: 서명 키(Secrets)를 넣기 전까지는 자동 빌드하지 않음.
+# 다시 켜려면 아래 push 부분 주석을 풀면 됨. (Actions 탭에서 직접 실행은 가능)
 on:
-  push:
-    branches: [main]
+  # push:
+  #   branches: [main]
   workflow_dispatch:
 
 permissions:
