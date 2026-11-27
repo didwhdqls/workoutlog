@@ -5,11 +5,14 @@ import { isWorkSet } from './stats';
 /**
  * 부위별 피로도(회복 상태) 추정.
  * - 운동 하나의 세트는 주 타깃 부위에 1, 함께 쓰이는 보조 부위에 0.5 만큼 피로를 쌓습니다.
- * - 쌓인 피로는 부위마다 정해진 회복 시간(큰 근육 72시간, 작은 근육 48시간)에 걸쳐 일정하게 줄어듭니다.
+ * - 쌓인 피로는 부위마다 정해진 회복 시간에 걸쳐 일정하게 줄어듭니다 (설정에서 부위별로 바꿀 수 있음).
  * 근거가 정밀한 모델은 아니고, "어디를 최근에 얼마나 썼나"를 한눈에 보기 위한 어림값입니다.
  */
 
-/** 다 회복되기까지 걸리는 시간(시간) */
+/**
+ * 기본 회복 시간(시간). 큰 근육은 길게, 매일 쓰이고 회복이 빠른 작은 근육(전완·복근·종아리 등)은 짧게.
+ * 사용자가 설정에서 바꾼 값(settings.recoveryHours)이 있으면 그쪽을 씀.
+ */
 export const RECOVERY_HOURS: Record<SubMuscle, number> = {
   chest: 72,
   'upper-chest': 72,
@@ -19,17 +22,26 @@ export const RECOVERY_HOURS: Record<SubMuscle, number> = {
   quads: 72,
   hamstrings: 72,
   glutes: 72,
-  traps: 60,
-  'front-delt': 60,
-  adductors: 60,
-  'side-delt': 48,
-  'rear-delt': 48,
+  traps: 48,
+  'front-delt': 48,
+  adductors: 48,
   biceps: 48,
   triceps: 48,
-  forearms: 48,
-  calves: 48,
-  abs: 48,
+  'side-delt': 36,
+  'rear-delt': 36,
+  calves: 36,
+  forearms: 24,
+  abs: 24,
 };
+export const RECOVERY_MIN = 12;
+export const RECOVERY_MAX = 120;
+
+/** 부위별로 바꾼 회복 시간 (없는 부위는 기본값) */
+export type RecoveryOverrides = Partial<Record<string, number>> | undefined;
+export function recoveryHours(sub: SubMuscle, overrides?: RecoveryOverrides): number {
+  const v = overrides?.[sub];
+  return v && v >= RECOVERY_MIN && v <= RECOVERY_MAX ? v : RECOVERY_HOURS[sub];
+}
 
 /** 다관절 운동의 보조 부위 (세트당 0.5) */
 export const SECONDARY: Record<string, SubMuscle[]> = {
@@ -121,9 +133,9 @@ interface Hit {
   amount: number;
 }
 
-function collectHits(workouts: Workout[], ex: Map<string, Exercise>, at: number): Hit[] {
+function collectHits(workouts: Workout[], ex: Map<string, Exercise>, at: number, maxHours: number): Hit[] {
   const hits: Hit[] = [];
-  const oldest = at - 80 * 3600_000; // 가장 긴 회복 시간보다 오래된 기록은 볼 필요 없음
+  const oldest = at - (maxHours + 8) * 3600_000; // 가장 긴 회복 시간보다 오래된 기록은 볼 필요 없음
   for (const w of workouts) {
     const t = w.endedAt ?? w.startedAt;
     if (t > at || t < oldest) continue;
@@ -136,25 +148,33 @@ function collectHits(workouts: Workout[], ex: Map<string, Exercise>, at: number)
   return hits;
 }
 
-function scoreAt(hits: Hit[], sub: SubMuscle, at: number): number {
-  const R = RECOVERY_HOURS[sub] * 3600_000;
+function scoreAt(hits: Hit[], sub: SubMuscle, at: number, hours: number): number {
+  const R = hours * 3600_000;
   let s = 0;
   for (const h of hits) if (h.sub === sub && h.at <= at) s += h.amount * Math.max(0, 1 - (at - h.at) / R);
   return s;
 }
 
 /** at 시각의 부위별 피로도 */
-export function fatigueAt(workouts: Workout[], ex: Map<string, Exercise>, at = Date.now()): Map<SubMuscle, MuscleFatigue> {
-  const hits = collectHits(workouts, ex, at);
+export function fatigueAt(
+  workouts: Workout[],
+  ex: Map<string, Exercise>,
+  at = Date.now(),
+  overrides?: RecoveryOverrides,
+): Map<SubMuscle, MuscleFatigue> {
+  const subs = Object.keys(RECOVERY_HOURS) as SubMuscle[];
+  const hours = new Map(subs.map((s) => [s, recoveryHours(s, overrides)]));
+  const hits = collectHits(workouts, ex, at, Math.max(...hours.values()));
   const out = new Map<SubMuscle, MuscleFatigue>();
-  for (const sub of Object.keys(RECOVERY_HOURS) as SubMuscle[]) {
-    const score = scoreAt(hits, sub, at);
+  for (const sub of subs) {
+    const R = hours.get(sub)!;
+    const score = scoreAt(hits, sub, at, R);
     let hoursLeft = 0;
     if (score >= 0.5) {
       // 한 시간씩 넘겨 보며 회복 시점 찾기 (최대 회복 시간까지)
-      for (let h = 1; h <= RECOVERY_HOURS[sub]; h++) {
+      for (let h = 1; h <= R; h++) {
         hoursLeft = h;
-        if (scoreAt(hits, sub, at + h * 3600_000) < 0.5) break;
+        if (scoreAt(hits, sub, at + h * 3600_000, R) < 0.5) break;
       }
     }
     out.set(sub, { score, level: levelOf(score), hoursLeft });

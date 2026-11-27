@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ask, askText, notify } from '../components/Dialog';
 import { Icon } from '../components/Icon';
 import { RestPicker } from '../components/RestPicker';
+import { RecoverySettings } from '../components/RecoverySettings';
 import { previewChime } from '../lib/sound';
 import { saveBackupNative } from '../lib/native';
 import { fmtRest } from '../lib/util';
@@ -120,6 +121,7 @@ export function Settings() {
           <Icon name="play" size={16} />
         </button>
         <Toggle label="휴식 종료 진동 (안드로이드)" on={settings.vibrate} onChange={(v) => update({ vibrate: v })} />
+        <RecoverySettings />
       </div>
 
       <div className="section-title">
