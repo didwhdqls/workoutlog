@@ -220,11 +220,7 @@ export function WorkoutDetail() {
 
   const prs = useMemo(() => (w ? findPRs(w, workouts, maps.tracks) : new Map<string, string[]>()), [w, workouts, maps.tracks]);
   // 이 운동을 마친 직후의 부위별 피로도 (그 전 사흘 안의 운동도 남은 만큼 반영)
-  const recovery = useStore((s) => s.settings.recoveryHours);
-  const fatigue = useMemo(
-    () => (w ? fatigueAt(workouts, maps.ex, w.endedAt ?? w.startedAt, recovery) : null),
-    [w, workouts, maps.ex, recovery],
-  );
+  const fatigue = useMemo(() => (w ? fatigueAt(workouts, maps.ex, w.endedAt ?? w.startedAt) : null), [w, workouts, maps.ex]);
   if (!w) return <div className="empty">기록을 찾을 수 없어요.</div>;
 
   const volume = workoutVolumeKg(w, maps.v, maps.ex, bw);

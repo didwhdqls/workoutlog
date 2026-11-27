@@ -39,8 +39,7 @@ export function Home() {
   const activeKey = active ? dayKey(active.startedAt) : null;
 
   // 지금 부위별 회복 상태 (1분마다 다시 계산할 필요는 없어 화면을 열 때 기준)
-  const recovery = useStore((s) => s.settings.recoveryHours);
-  const fatigue = useMemo(() => fatigueAt(workouts, maps.ex, Date.now(), recovery), [workouts, maps.ex, recovery]);
+  const fatigue = useMemo(() => fatigueAt(workouts, maps.ex), [workouts, maps.ex]);
   const anyFatigue = [...fatigue.values()].some((f) => f.level > 0);
   const [showFatigueList, setShowFatigueList] = useState(false);
 

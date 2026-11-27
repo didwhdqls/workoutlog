@@ -206,8 +206,6 @@ export interface Settings {
   lastGymId: string | null;
   /** 주 시작 요일: 1 = 월요일, 0 = 일요일 */
   weekStart: 0 | 1;
-  /** 근육 피로도: 부위별로 바꾼 회복 시간(시간). 없는 부위는 기본값 */
-  recoveryHours?: Record<string, number>;
 }
 
 export interface RestTimer {
